@@ -1,4 +1,4 @@
-# VirtualHost Templates — SSL Ready (Apache / Nginx / Tomcat)
+# VirtualHost — SSL cho (Apache / Nginx / Tomcat)
 
 ---
 
@@ -8,7 +8,7 @@
 
 ```nginx
 # ══════════════════════════════════════════════════════════════
-#  NGINX VirtualHost Template — SSL Ready
+#  NGINX VirtualHost Template — SSL 
 #  Sửa: DOMAIN | USER | CERT_PATH
 # ══════════════════════════════════════════════════════════════
 
@@ -112,7 +112,7 @@ hoặc `/etc/apache2/sites-available/DOMAIN.conf` (Ubuntu)
 
 ```apache
 # ══════════════════════════════════════════════════════════════
-#  APACHE VirtualHost Template — SSL Ready
+#  APACHE VirtualHost Template — SSL 
 #  Sửa: DOMAIN | USER | CERT_PATH
 # ══════════════════════════════════════════════════════════════
 
@@ -220,7 +220,7 @@ apachectl configtest && systemctl reload httpd
 
 ```nginx
 # ══════════════════════════════════════════════════════════════
-#  NGINX → TOMCAT Reverse Proxy Template — SSL Ready
+#  NGINX → TOMCAT Reverse Proxy Template — SSL 
 #  Sửa: DOMAIN | CERT_PATH | APP_PORT (mặc định 8080)
 # ══════════════════════════════════════════════════════════════
 
@@ -386,8 +386,8 @@ chown -R root:root CERT_PATH/
 
 ```bash
 # 1. Test cú pháp config
-nginx -t                               # Nginx
-apachectl configtest                   # Apache
+nginx -t 
+apachectl configtest 
 
 # 2. Reload (không restart — tránh gián đoạn)
 systemctl reload nginx
@@ -448,7 +448,7 @@ systemctl restart apache2    # Ubuntu
 
 ```nginx
 # ══════════════════════════════════════════════════════════════
-#  NGINX → APACHE Reverse Proxy Template — SSL Ready
+#  NGINX → APACHE Reverse Proxy Template — SSL 
 #  Sửa: DOMAIN | CERT_PATH
 #  Apache chạy port 8080 nội bộ
 # ══════════════════════════════════════════════════════════════
