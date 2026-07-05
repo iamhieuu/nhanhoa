@@ -1,47 +1,319 @@
-# Hướng dẫn sử dụng cPanel (2083) & WHM (2087) trên Ubuntu 22.04 LTS
+# Hướng dẫn sử dụng cPanel (2083) & WHM (2087)
 
-> **Môi trường:** cPanel/WHM v134 · Ubuntu 22.04 LTS · Apache + PHP-FPM + MariaDB
+> **Hệ điều hành:** Ubuntu v22.04.5 STANDARD kvm
+> **Phiên bản:** cPanel/WHM 134.0.43
+> **Giao diện (Theme):** Jupiter
 > **Domain thực hành:** `hieucute.id.vn`
+> **Username cPanel:** `iamhieu`
 > **VPS IP:** `103.159.51.228`
 > **Truy cập cPanel:** `https://103.159.51.228:2083` hoặc `https://hieucute.id.vn:2083`
-> **Truy cập WHM:** `https://103.159.51.228:2087` (chỉ root/reseller)
+> **Truy cập WHM:** `https://103.159.51.228:2087`
+> **Truy cập Webmail:** `https://103.159.51.228:2096`
 
 ---
 
 ## Mục lục
 
-- [1. Quản lý Tên miền & Web](#1-quản-lý-tên-miền--web)
-- [2. Quản lý File](#2-quản-lý-file)
-- [3. Quản lý Tài khoản FTP](#3-quản-lý-tài-khoản-ftp)
-- [4. Quản lý Cơ sở dữ liệu MySQL](#4-quản-lý-cơ-sở-dữ-liệu-mysql)
-- [5. Bảo mật – Kích hoạt SSL miễn phí](#5-bảo-mật--kích-hoạt-ssl-miễn-phí)
-- [6. Quản lý Email & Chống Spam](#6-quản-lý-email--chống-spam)
-- [7. Mailing List](#7-mailing-list)
-- [8. Cron Jobs](#8-cron-jobs)
-- [9. Backup & Restore (cấp User)](#9-backup--restore-cấp-user)
-- [10. Triển khai Next.js trên cPanel](#10-triển-khai-nextjs-trên-cpanel)
-- [11. 5 lỗi phổ biến nhất trên cPanel 134 / Ubuntu 22.04](#11-5-lỗi-phổ-biến-nhất-trên-cpanel-134--ubuntu-2204)
-- [12. WHM (2087) – Quản trị cấp Server](#12-whm-2087--quản-trị-cấp-server)
-- [13. Webmail độc lập (2096)](#13-webmail-độc-lập-2096)
-- [14. Bảng quyết định nhanh: Vào cổng nào?](#14-bảng-quyết-định-nhanh-vào-cổng-nào)
-- [15. Học cPanel/WHM bằng tư duy DirectAdmin (Mapping kiến thức)](#15-học-cpanelwhm-bằng-tư-duy-directadmin-mapping-kiến-thức)
-- [16. Thực chiến: Tạo Package → Tạo User → SSL → WordPress](#16-thực-chiến-tạo-package--tạo-user--ssl--wordpress)
+- [1. Tổng quan cổng truy cập](#1-tổng-quan-cổng-truy-cập)
+- [2. WHM – Quản trị cấp Server](#2-whm--quản-trị-cấp-server)
+- [3. Quản lý Tên miền & Web (cPanel)](#3-quản-lý-tên-miền--web-cpanel)
+- [4. Quản lý File](#4-quản-lý-file)
+- [5. Quản lý Tài khoản FTP](#5-quản-lý-tài-khoản-ftp)
+- [6. Quản lý Cơ sở dữ liệu MySQL](#6-quản-lý-cơ-sở-dữ-liệu-mysql)
+- [7. Bảo mật – Kích hoạt SSL](#7-bảo-mật--kích-hoạt-ssl)
+- [8. Quản lý Email & Chống Spam](#8-quản-lý-email--chống-spam)
+- [9. Mailing List](#9-mailing-list)
+- [10. Cron Jobs](#10-cron-jobs)
+- [11. Backup & Restore](#11-backup--restore)
+- [12. Triển khai Next.js trên cPanel](#12-triển-khai-nextjs-trên-cpanel)
+- [13. 5 lỗi phổ biến nhất](#13-5-lỗi-phổ-biến-nhất)
+- [14. Thực chiến: Tạo Package → Account → SSL → WordPress](#14-thực-chiến-tạo-package--account--ssl--wordpress)
+- [15. Mapping kiến thức DirectAdmin sang cPanel/WHM](#15-mapping-kiến-thức-directadmin-sang-cpanelwhm)
 
 ---
 
-Truy cập: `https://<IP-hoặc-domain>:<port>` — ví dụ `https://103.159.51.228:2087`.
+## 1. Tổng quan cổng truy cập
 
-> Chủ yếu dùng **2087 (WHM)** để xử lý ticket cấp server, và **2083 (cPanel)** để hỗ trợ/kiểm tra thay mặt khách hàng.
+cPanel/WHM tách biệt rõ ràng theo cổng — khác hoàn toàn với DirectAdmin dùng chung một cổng 2222 cho mọi cấp:
+
+| Cổng | Dịch vụ | Dành cho | Truy cập thực tế |
+|------|---------|----------|-----------------|
+| **2087** | WHM (HTTPS) | Root / Reseller — quản trị toàn server | `https://103.159.51.228:2087` |
+| **2083** | cPanel (HTTPS) | User — quản lý 1 tài khoản hosting | `https://103.159.51.228:2083` |
+| **2096** | Webmail (HTTPS) | Người dùng cuối — chỉ đọc/gửi email | `https://103.159.51.228:2096` |
+
+> DA dùng port 2222 cho tất cả (phân biệt bằng tài khoản đăng nhập). cPanel/WHM tách vật lý theo cổng — Admin/Reseller vào 2087, khách hàng vào 2083, người dùng email vào 2096.
+
 
 ---
 
-## 1. Quản lý Tên miền & Web
+## 2. WHM – Quản trị cấp Server
 
-### 1.1 Trỏ tên miền về VPS
+> WHM (Web Host Manager) là panel dành cho **root hoặc reseller**, quản lý toàn bộ server: nhiều tài khoản cPanel, dịch vụ hệ thống, firewall, backup server...
 
-Trước khi làm bất kỳ thao tác nào trên cPanel, phải đảm bảo DNS của `hieucute.id.vn` đã trỏ về đúng IP VPS.
+### 2.1 Tạo Package (Gói hosting)
 
-**Đăng nhập trang quản lý tên miền tại Nhân Hòa** → Zone DNS → kiểm tra/thêm bản ghi:
+Package định nghĩa giới hạn tài nguyên cho một nhóm tài khoản. Tạo Package **một lần**, dùng lại cho mọi khách cùng gói — tương đương "User Package" bên DirectAdmin.
+
+**Đường dẫn:** WHM → **Packages** → **Add a Package**
+
+**Bước 1:** Điền tên Package — đặt tên có ý nghĩa, không dấu, không khoảng trắng.
+
+**Bước 2:** Cấu hình tài nguyên theo chuẩn gói Doanh Nghiệp Nhân Hòa:
+
+| Trường | Giá trị ví dụ | Ghi chú |
+|--------|--------------|---------|
+| Package Name | `doanhnghiep_package` | Không dấu, không cách |
+| Disk Quota | `6144` MB (6 GB) | Khớp với thực tế trên server (Ảnh 1: Quota 6 GB) |
+| Bandwidth | `Unlimited` | Hoặc 50000 MB tùy gói |
+| Max Email Accounts | `Unlimited` | |
+| Max Mailing Lists | `10` | |
+| Max Databases | `6` | Khớp Ảnh 3: Databases 0/6 |
+| Max FTP Accounts | `Unlimited` | |
+| Max Subdomains | `Unlimited` | Ảnh 3: Subdomains 0/∞ |
+| Max Parked Domains (Alias) | `Unlimited` | Ảnh 3: Alias Domains 0/∞ |
+| Max Addon Domains | `3` | Ảnh 1 & 3: Addon Domains 0/3 |
+| CGI Access | ✅ Bật | |
+| Shell Access | ❌ Tắt | Khách thường không cần SSH |
+| Feature List | `default` | |
+
+**Bước 3:** Nhấn **Add** → Package xuất hiện trong danh sách.
+
+<img width="779" height="440" alt="image" src="https://github.com/user-attachments/assets/e72393d5-2559-4f29-990d-931c153ea453" />
+
+>  **Lưu ý:** Không thể xóa Package đang được gán cho tài khoản. Muốn xóa phải chuyển toàn bộ account sang Package khác trước.
+
+---
+
+### 2.2 Tạo tài khoản mới (Create a New Account)
+
+**Đường dẫn:** WHM → **Account Functions** → **Create a New Account**
+
+**Bước 1 – Domain Information:**
+
+| Trường | Giá trị ví dụ | Quy tắc bắt buộc |
+|--------|--------------|-----------------|
+| Domain | `hieucute.id.vn` | Nhập đúng FQDN, không có `http://` hay `/` |
+| Username | `iamhieu` | **không đặt là `root`**, đặt `root` sẽ xung đột quyền và gây lỗi nghiêm trọng |
+| Password | *(dùng Password Generator)* | bước 2 |
+| Email | `admin@hieucute.id.vn` | Email thật để nhận thông báo hệ thống |
+
+
+>  **Quy tắc đặt Username:**
+> - Viết liền, không dấu, không khoảng trắng, chỉ dùng chữ thường và số.
+> - Tối đa 16 ký tự.
+> - Tránh các tên nhạy cảm: `root`, `admin`, `test`, `mail`, `ftp`.
+> - Username này sẽ là tên thư mục home (`/home/iamhieu`) và là prefix của mọi database, FTP account trong cPanel.
+
+**Bước 2 – Tạo mật khẩu mạnh:**
+
+Nhấn nút **Password Generator** → hệ thống tạo mật khẩu ngẫu nhiên đạt **100/100 điểm** → nhấn **Use Password** → copy lưu lại.
+
+**Bước 3 – Chọn Package:**
+
+Tại mục **Package** → chọn `doanhnghiep_package` .
+
+**Bước 4 – Mail Routing Settings:**
+
+Chọn **Automatically Detect Configuration**.
+
+> Tùy chọn này để cPanel tự xác định cấu hình email phù hợp dựa trên DNS hiện tại. Chỉ chọn **Local Mail Exchanger** khi chắc chắn server này xử lý email nội bộ hoàn toàn và MX record đã trỏ về đúng IP.
+
+**Bước 5 – DNS Settings (cực kỳ quan trọng):**
+
+Tích chọn đầy đủ cả 3 mục:
+
+| Tùy chọn | Trạng thái | Lý do |
+|----------|-----------|-------|
+|  **Enable DKIM** | Bật | Chữ ký số xác thực email — thiếu là email vào Spam |
+|  **Enable SPF** | Bật | Xác thực IP được phép gửi mail — thiếu là email vào Spam |
+|  **Enable DMARC** | Bật | Chính sách xử lý email giả mạo — bảo vệ domain khỏi bị giả mạo |
+
+>  Nếu bỏ qua bước này, email từ `hieucute.id.vn` sẽ bị Gmail, Outlook đánh dấu Spam ngay từ đầu. Kích hoạt sau khi tạo account phức tạp hơn nhiều so với bật ngay từ lúc tạo.
+
+**Bước 6:** Nhấn **Create** → quan sát log cuối trang.
+
+<img width="643" height="445" alt="image" src="https://github.com/user-attachments/assets/7730dbea-603f-494c-8905-6308434691f1" />
+
+---
+
+### 2.3 Quản lý tài khoản hiện có
+
+**Suspend / Unsuspend** 
+
+WHM → **Account Functions** → **Manage Account Suspension**
+
+>  Ghi rõ lý do suspend — khách sẽ thấy thông báo này khi truy cập website.
+
+<img width="674" height="367" alt="image" src="https://github.com/user-attachments/assets/0c84f28b-ef12-4bd9-b20e-5519853f9bcf" />
+
+**Đổi Package / Nâng cấp tài khoản:**
+
+WHM → **Account Functions** → **Modify an Account** → chọn username → đổi Package → **Save**.
+
+<img width="724" height="434" alt="image" src="https://github.com/user-attachments/assets/65196393-aea0-4f5e-a3ef-d38265920e1b" />
+
+**Terminate (xóa vĩnh viễn):**
+
+WHM → **Account Functions** → **Terminate a Multi-User Account**
+
+> Thao tác này xóa toàn bộ dữ liệu (file, database, email) không thể hoàn tác. Bắt buộc tạo Full Backup trước khi terminate (xem mục 11).
+
+<img width="875" height="421" alt="image" src="https://github.com/user-attachments/assets/cc5d3c91-34a1-4b7e-9733-91300eeec2ce" />
+
+---
+
+### 2.4 Quản lý dịch vụ hệ thống
+
+**Restart dịch vụ:**
+
+WHM → **Restart Services** → chọn dịch vụ (Apache, MySQL, Exim...) → **Restart**.
+
+<img width="518" height="182" alt="image" src="https://github.com/user-attachments/assets/ec338fd7-d8fa-43db-aaea-ccaf6a86d600" />
+
+**Kiểm tra trạng thái dịch vụ:**
+
+WHM → **Server Status** → **Service Status** — hiển thị màu xanh/đỏ cho từng dịch vụ.
+
+<img width="800" height="439" alt="image" src="https://github.com/user-attachments/assets/bf9bae76-aa37-4773-9050-3aecac3bfc01" />
+
+**Giám sát tài nguyên:**
+
+WHM → **System health** → **Process Manager** (tương đương lệnh `top`).
+
+<img width="944" height="434" alt="image" src="https://github.com/user-attachments/assets/fa664dde-ea8d-4cf7-aed3-4ce734ee9d7a" />
+
+---
+
+### 2.5 Quản lý DNS cấp server
+
+WHM → **DNS Functions** → **Edit DNS Zone** — sửa zone của bất kỳ domain nào trên server.
+
+<img width="542" height="430" alt="image" src="https://github.com/user-attachments/assets/a6c11513-3abf-4214-aa42-83517303a4e0" />
+
+---
+
+### 2.6 SSL cấp server
+
+- **Manage AutoSSL** → chọn provider (Let's Encrypt hoặc Sectigo), chạy AutoSSL cho toàn bộ hoặc từng account.
+- **Install an SSL Certificate on a Domain** → cài cert cho hostname của chính server.
+
+<img width="948" height="431" alt="image" src="https://github.com/user-attachments/assets/159dedbd-238f-4c1c-b3d2-b0c6dcaaf0ab" />
+
+---
+
+
+
+### 2.7 Cấu Hình Backup Configuration
+**Đường dẫn truy cập:** `WHM` → `Backup` → `Backup Configuration`
+
+### 2.7.1 Bật Tính Năng Backup
+* Chuyển đổi trạng thái **Backup Status** sang **Enable**.  
+*  Nếu tùy chọn này bị tắt (`Disable`), toàn bộ các cấu hình chi tiết bên dưới sẽ không có hiệu lực và hệ thống sẽ không thực hiện sao lưu.
+
+### 2.7.2  (Backup Type)
+
+| Loại Backup | Mô tả chi tiết | Ngữ cảnh sử dụng khuyến nghị |
+| :--- | :--- | :--- |
+| **Compressed** | Nén dữ liệu thành định dạng `.tar.gz`. Giúp tiết kiệm dung lượng ổ cứng tối đa nhưng tiêu tốn nhiều tài nguyên CPU khi nén và giải nén. | Phù hợp với server có ít account, dung lượng ổ đĩa chứa backup hạn chế. |
+| **Uncompressed** | Giữ nguyên định dạng file, không nén. Tốc độ backup và restore cực nhanh nhưng chiếm dụng không gian lưu trữ lớn. | Phù hợp với server có nhiều account, yêu cầu tốc độ xử lý cao và ổ đĩa backup còn dư dả. |
+| **Incremental (rsync)** | Chỉ sao lưu những phần dữ liệu có sự thay đổi. | Phù hợp với server dữ liệu lớn, cần backup hàng ngày nhằm tiết kiệm tối đa thời gian và băng thông. |
+
+>   Loại *Incremental* mang lại hiệu quả cao nhất về thời gian và dung lượng. Tuy nhiên, nó không xuất ra file `.tar.gz` đơn lẻ để user dễ dàng tải về máy cá nhân. Việc restore bắt buộc phải thực hiện thông qua giao diện quản trị WHM thay vì tải file di chuyển thủ công.
+
+<img width="451" height="337" alt="image" src="https://github.com/user-attachments/assets/611ff5da-f155-435f-8510-7836725fbea2" />
+
+### 2.7.3 Thiết Lập Schedule
+Mỗi loại lịch chạy đều có ô **"Retain X"** tương ứng với số lượng bản backup gần nhất được giữ lại trước khi hệ thống tự động xóa bản cũ .
+
+* **Daily (Hàng ngày):** Chọn các ngày cụ thể trong tuần (Ví dụ: Chỉ chạy từ thứ 2 đến thứ 6). *Retention* được tính riêng cho Daily. (Ví dụ: Giữ 7 bản = Lưu trữ xoay vòng 7 ngày gần nhất).
+* **Weekly (Hàng tuần):** Chọn một ngày cố định trong tuần để chạy. *Retention* tính riêng cho Weekly.
+* **Monthly (Hàng tháng):** Chọn ngày cụ thể trong tháng (Ngày 1, ngày 15...). *Retention* tính riêng cho Monthly.
+
+<img width="502" height="364" alt="image" src="https://github.com/user-attachments/assets/3e4b0593-40a9-4ec7-891b-14d89e8b9013" />
+
+### 2.7.4 Lựa Chọn Dữ Liệu Sao Lưu 
+
+* **Accounts (Toàn bộ tài khoản):**  Đây là thành phần cốt lõi và quan trọng nhất chứa toàn bộ dữ liệu khách hàng.
+* **System Files (Cấu hình hệ thống):**  Sao lưu các thư mục hệ thống như `/etc`, cấu hình Apache, Exim... 
+* **Suspended Accounts (Tài khoản bị khóa):**  Đảm bảo dữ liệu của các tài khoản đang bị tạm ngưng vẫn được an toàn phòng trường hợp được kích hoạt lại.
+* **Bandwidth Data (Số liệu băng thông):** Lưu trữ số liệu thống kê lưu lượng, không quá bắt buộc.
+
+<img width="431" height="371" alt="image" src="https://github.com/user-attachments/assets/6bf67e55-68d7-4fb4-a27d-5e03048681eb" />
+
+### 2.7.5 Cấu Hình Nơi Lưu Trữ Ngoại Vi (Additional Destinations)
+>  Tuyệt đối không lưu trữ backup trên cùng một ổ đĩa vật lý/partition với dữ liệu gốc. Nếu máy chủ gặp sự cố phần cứng hỏng ổ đĩa, toàn bộ dữ liệu gốc và dữ liệu backup sẽ mất sạch. Nên áp dụng chiến lược **3-2-1** (3 bản sao, 2 loại phương tiện lưu trữ, 1 bản lưu off-site).
+
+**Đường dẫn:** `WHM` → `Backup` → `Backup Configuration` → `Additional Destinations`
+
+* **Local Directory:** Lưu sang một phân vùng (partition) hoặc ổ đĩa gắn thêm (`mount`) độc lập trên cùng server. (Mức độ an toàn: Thấp).
+* **FTP:** Cần khai báo *Host, Username, Password, Remote Directory*. Phổ biến khi doanh nghiệp có cụm server backup riêng.
+* **SFTP/SCP:** Tương tự FTP nhưng bảo mật hơn nhờ chạy trên giao thức mã hóa (Port 22, hỗ trợ xác thực bằng Private Key hoặc Password).
+* **Amazon S3 / S3-Compatible:** Kết nối qua *Access Key, Secret Key, Bucket name*. Đây là chuẩn Production tối ưu, tách biệt hoàn toàn dữ liệu khỏi hạ tầng vật lý của server gốc.
+* **Google Drive / Backblaze / Rsync to remote:** Tùy thuộc vào nhà cung cấp dịch vụ hạ tầng của doanh nghiệp.
+
+<img width="446" height="308" alt="image" src="https://github.com/user-attachments/assets/99a3586b-5b5f-46fc-8d64-ac0fc646d232" />
+
+### 2.7.6 Hệ Thống Cảnh Báo (Notification)
+* **Đường dẫn:** `WHM` → `Backup` → `Backup Configuration` → `Notifications`
+* **Thao tác:** Điền chính xác địa chỉ email nhận báo cáo.
+* *Lưu ý:* Luôn bật tính năng này để nhận báo cáo sau mỗi phiên chạy (Thành công/Thất bại). Tránh tình trạng hệ thống lỗi ngầm nhiều tuần liền mà quản trị viên không hay biết, dẫn đến không có dữ liệu khôi phục khi xảy ra sự cố thực tế.
+
+---
+
+## 2.7.8 Cấu Trúc File cpmove — Hiểu Để Restore Đúng
+
+Sau khi Backup Configuration chạy hoàn tất, hệ thống sẽ sinh ra file có định dạng chuẩn:
+`cpmove-abccompany.tar.gz` (Trong đó `abccompany` là username của tài khoản).
+
+Khi tiến hành giải nén cấu trúc file này, bên trong sẽ bao gồm:
+* `homedir/`: Chứa toàn bộ mã nguồn website, mã nguồn email (`public_html`, `mail`...).
+* `mysql/` hoặc `mysql.sql`: Bản dump toàn bộ cơ sở dữ liệu của tài khoản hoặc từng file `.sql` riêng lẻ cho từng database.
+* `meta/`: Thông tin cấu hình hệ thống của tài khoản .
+* `userdata/`: Cấu hình Virtual Host của Apache dành riêng cho account đó.
+* `homedir_paths.yaml`: Bản đồ ánh xạ đường dẫn thư mục.
+
+>  Đây chính là lý do vì sao một file Full Account Backup dạng `cpmove` không thể khôi phục thông qua giao diện cPanel của user thường. Nó chứa các siêu dữ liệu cấu hình hệ thống (Metadata) cần quyền tối cao (`root`) để ghi đè vào các file cấu hình trục dọc của máy chủ WHM.
+
+---
+
+## 2.8 Hướng Dẫn Thực Chiến Khôi Phục Dữ Liệu (Restore)
+
+### Cách 1: Restore Qua Giao Diện WHM (Phổ biến, trực quan)
+**Đường dẫn:** `WHM` → `Backup` → `Restore a Full Backup/cpmove File`
+
+* **Bước 1: Chọn nguồn file (Source)**
+    * *Restore from Home Directory:* Chọn nếu file `cpmove-*.tar.gz` đã được định vị sẵn trên server (nằm trong thư mục `/home` do hệ thống tự backup hoặc do bạn upload qua SFTP trước đó).
+    * *Upload File:* Upload trực tiếp file từ máy tính cá nhân qua trình duyệt (Chỉ khuyên dùng với file dung lượng nhỏ để tránh lỗi timeout trình duyệt).
+* **Bước 2: Chọn tài khoản cần restore**
+    * Hệ thống WHM sẽ tự động quét và nhận diện tên `username` dựa trên cấu trúc tên file `cpmove-username.tar.gz`.
+* **Bước 3: Chọn các tùy chọn nâng cao**
+    * `Restore as Suspended`: Khôi phục xong dữ liệu nhưng giữ tài khoản ở trạng thái khóa. Nên chọn để quản trị viên có thời gian kiểm tra lại file/DB trước khi cho chạy public.
+    * `Overwrite existing account`: Ghi đè lên tài khoản nếu nó đang tồn tại sẵn trên server. *(Cực kỳ cẩn trọng vì hành động này sẽ xóa sạch dữ liệu hiện tại của account đó)*.
+* **Bước 4:** Nhấn **Submit** → Theo dõi tiến trình qua log hiển thị thời gian thực cho đến khi xuất hiện thông báo thành công.
+* **Bước 5:** Nếu có tick chọn ở bước 3, tiến hành kiểm tra mã nguồn, sau đó vào quản lý tài khoản để **Unsuspend** thủ công.
+
+<img width="809" height="368" alt="image" src="https://github.com/user-attachments/assets/703cb11c-06f0-47cf-b627-3e8f258d13e7" />
+
+### Cách 2: Restore Qua Giao Diện Dòng Lệnh SSH (Nhanh, tối ưu cho file lớn)
+Áp dụng khi file backup có dung lượng lớn (vài chục đến hàng trăm GB) để tránh các giới hạn hoặc ngắt kết nối của trình duyệt web. File backup cần được di chuyển sẵn vào thư mục `/home`.
+
+1. **Kiểm tra sự tồn tại và tính toàn vẹn của file:**
+   ```bash
+   ls -lh /home/cpmove-abccompany.tar.gz
+
+
+---
+
+
+
+## 3. Quản lý Tên miền & Web (cPanel)
+
+### 3.1 Trỏ tên miền về VPS
+
+Trước khi làm bất kỳ thao tác nào trên cPanel, DNS của `hieucute.id.vn` phải trỏ đúng về IP VPS.
+
+**Đăng nhập trang quản lý tên miền tại Nhân Hòa** → Zone DNS → kiểm tra/thêm:
 
 | Host | Type | Value | TTL |
 |------|------|-------|-----|
@@ -49,124 +321,134 @@ Trước khi làm bất kỳ thao tác nào trên cPanel, phải đảm bảo DN
 | `www` | CNAME | `hieucute.id.vn.` | 300 |
 | `mail` | A | `103.159.51.228` | 300 |
 
-Kiểm tra DNS đã propagate chưa:
+**Kiểm tra propagate:**
 ```bash
-nslookup hieucute.id.vn
-# hoặc
-dig A hieucute.id.vn
+dig A hieucute.id.vn +short
+# Kết quả đúng: 103.159.51.228
 ```
+<img width="347" height="116" alt="image" src="https://github.com/user-attachments/assets/b1d511d8-9ea5-4fcf-84d2-3816a73aeffe" />
 
-Kết quả đúng phải trả về `103.159.51.228`.
+>  Không tiếp tục bất kỳ bước nào (cài SSL, cài WordPress...) nếu DNS chưa trả về đúng IP. AutoSSL sẽ luôn thất bại nếu DNS sai.
 
 ---
 
-### 1.2 Thêm Domain mới (Addon Domain / Alias)
+### 3.2 Thêm Domain mới
 
-Trong cPanel 134, Addon Domain và Alias Domain được gộp vào mục **Domains**.
+**Đường dẫn:** cPanel → mục **Domains**  → **Domains**
 
-**Bước 1:** Đăng nhập `https://103.159.51.228:2083` → mục **Domains** → chọn **Domains**.
+**Bước 1:** Nhấn **Create A New Domain**.
 
-**Bước 2:** Nhấn **Create A New Domain**.
-
-**Bước 3:** Điền thông tin:
+**Bước 2:** Điền thông tin:
 
 | Trường | Giá trị ví dụ | Ghi chú |
 |--------|--------------|---------|
-| Domain | `shop.hieucute.id.vn` | Nhập FQDN, không có `www` hay `http://` |
-| Document Root | `/home/hieu/shop.hieucute.id.vn` | Tự động điền, có thể sửa |
-| Share document root | **Bỏ tick** | Để domain chạy website riêng độc lập |
+| Domain | `shop.hieucute.id.vn` | Nhập FQDN — không có `www`, không có `http://` |
+| Document Root | `/home/iamhieu/shop.hieucute.id.vn` | Tự động điền, có thể sửa |
+| Share document root | **BỎ TICK** | Xem cảnh báo bên dưới |
 
-**Bước 4:** Nhấn **Submit**.
+>  **CẢNH BÁO — Share document root:**
+> - Nếu **tick** ô này → domain mới sẽ hiển thị **y hệt nội dung** domain chính (`hieucute.id.vn`). Đây thường là **nhầm lẫn không mong muốn** và **rất khó hoàn tác** sau khi đã có dữ liệu.
+> - **Quy tắc:** Luôn **bỏ tick** trừ khi bạn có chủ đích muốn domain phụ hiển thị cùng nội dung.
 
-**Bước 5:** Thêm A record tại DNS của Nhân Hòa:
+**Bước 3:** Nhấn **Submit**.
+
+**Bước 4:** Thêm A record tại DNS Nhân Hòa:
 ```
 shop.hieucute.id.vn.   A   103.159.51.228   TTL 300
 ```
 
-> ⚠️ **Lưu ý:**
-> - Nếu tick **Share document root**, domain mới hiển thị **cùng nội dung** với domain chính — khó hoàn tác.
-> - Chờ DNS propagate 5–30 phút trước khi kiểm tra.
-> - VirtualHost được tạo tự động tại `/etc/apache2/conf.d/userdata/` trên Ubuntu 22.04.
 
 ---
 
-### 1.3 Cài đặt WordPress qua WP Toolkit
+### 3.3 Cài đặt WordPress qua WordPress Management
 
-**WP Toolkit** là công cụ chính thức của cPanel, nhanh và toàn diện hơn Softaculous.
+**Đường dẫn:** cPanel → sidebar trái → **WordPress Management** (hoặc mục **Domains** → **WordPress Management**)
 
-**Bước 1:** cPanel → **Software** → **WordPress Toolkit**.
+**Bước 1:** Nhấn **Install WordPress** (hoặc **Install** nếu đã vào trang quản lý).
 
-**Bước 2:** Nhấn **Install WordPress**.
+<img width="509" height="199" alt="image" src="https://github.com/user-attachments/assets/d1332952-8cb1-44b4-8e7c-0144a02687b1" />
 
-**Bước 3:** Điền thông tin:
+**Bước 2:** Điền thông tin cài đặt:
 
-| Trường | Giá trị thực tế | Ghi chú |
+| Trường | Giá trị thực tế | Quy tắc |
 |--------|----------------|---------|
-| Domain | `hieucute.id.vn` | Chọn domain chính |
-| Directory | Để trống | Cài tại root domain |
-| WordPress version | Latest stable | Luôn dùng phiên bản mới nhất |
-| Admin username | `admin_hieucute` | **Không dùng `admin`** |
-| Admin password | *(tạo mạnh ≥12 ký tự)* | Lưu lại cẩn thận |
-| Admin email | `info@hieucute.id.vn` | |
+| Domain | `hieucute.id.vn` | Chọn domain đúng từ dropdown |
+| Directory | Để trống | Cài tại root — `https://hieucute.id.vn/` |
+| WordPress version | Latest stable | Luôn chọn phiên bản mới nhất |
+| Admin username | `admin_hieucute` | **Không dùng `admin`** — dễ bị brute force |
+| Admin password | *(Password Generator)* | Tối thiểu 12 ký tự |
+| Admin email | `admin@hieucute.id.vn` | Email thật để nhận thông báo WP |
+| Site Title | `iamhieu` | - |
+| Site Language | `Vietnamese` | |
 
-**Bước 4:** Nhấn **Install** → chờ 1–2 phút.
+<img width="624" height="335" alt="image" src="https://github.com/user-attachments/assets/60338c5e-e910-469b-8f45-ec6f88483616" />
 
-**Bước 5:** Truy cập `https://hieucute.id.vn/wp-admin`.
+**Bước 3:** Nhấn **Install** → chờ 1–2 phút.
 
-**Tính năng nổi bật của WP Toolkit:**
-- **Smart Update:** Cập nhật an toàn, tự rollback nếu lỗi
-- **Security Check:** Quét lỗ hổng bảo mật
-- **Clone:** Tạo staging environment
-- **Backup/Restore:** Backup từng WP site
+**Bước 4:** Truy cập `https://hieucute.id.vn/wp-admin` để đăng nhập.
 
-> ⚠️ Nếu không thấy WP Toolkit: WHM → **Manage Plugins** → cài **WP Toolkit Deluxe**.
+**Tính năng nổi bật của WordPress Management (WP Toolkit):**
 
----
+| Tính năng | Mô tả |
+|-----------|-------|
+| Smart Update | Cập nhật WP/plugin an toàn, tự rollback nếu lỗi |
+| Security Check | Quét lỗ hổng bảo mật, gợi ý khắc phục |
+| Clone | Tạo bản staging để test trước khi deploy |
+| Backup/Restore | Backup từng WP site độc lập |
 
-### 1.4 Cài WordPress qua Softaculous
+<img width="935" height="431" alt="image" src="https://github.com/user-attachments/assets/bd434ef0-7ec8-41c3-8c37-8e13ce220a15" />
 
-**Bước 1:** cPanel → **Software** → **Softaculous Apps Installer**.
-
-**Bước 2:** Tìm **WordPress** → nhấn **Install Now**.
-
-**Bước 3:** Điền thông tin tương tự WP Toolkit → nhấn **Install**.
 
 ---
 
-## 2. Quản lý File
+### 3.4 Cài WordPress qua Softaculous (thay thế)
 
-### 2.1 Upload file lên public_html
+**Đường dẫn:** cPanel → **Software** → **Softaculous Apps Installer** → tìm **WordPress** → **Install Now** → điền thông tin → **Install**.
 
-**Cách 1: File Manager (file nhỏ)**
+---
 
-**Bước 1:** cPanel → **Files** → **File Manager**.
+## 4. Quản lý File
 
-**Bước 2:** Điều hướng vào `public_html`.
+### 4.1 Upload file lên public_html
 
-**Bước 3:** Nhấn **Upload** → kéo thả hoặc chọn file → hệ thống hiển thị tiến trình realtime.
+**Cách 1: File Manager (dùng cho file nhỏ, thao tác nhanh)**
 
-**Cách 2: FTP/SFTP (khuyến nghị cho project lớn)**
+**Đường dẫn:** cPanel → mục **Files** → **File Manager**
+
+<img width="959" height="345" alt="image" src="https://github.com/user-attachments/assets/94f4ffee-07e5-4e02-a9e2-f9e2a2270c25" />
+
+**Bước 1:** Trong cây thư mục bên trái, click vào **public_html**.
+
+**Bước 2:** Nhấn **Upload** trên thanh công cụ.
+
+**Bước 3:** Kéo thả file vào vùng upload hoặc nhấn **Select File** — thanh tiến trình hiển thị realtime.
+
+**Bước 4:** Sau khi upload xong, nhấn **Go Back** để quay lại thư mục.
+
+<img width="956" height="395" alt="image" src="https://github.com/user-attachments/assets/0123ef66-4086-4ef1-9254-7d50ff4e6bdb" />
+
+**Cách 2: FTP/SFTP qua FileZilla ( cho project nhiều file)**
 
 ```
 Host:     hieucute.id.vn  (hoặc 103.159.51.228)
-Port:     21 (FTP) / 22 (SFTP)
-Username: tài khoản cPanel
+Port:     22 (SFTP) — ưu tiên dùng SFTP
+Username: iamhieu
 Password: mật khẩu cPanel
 ```
 
-> Ưu tiên **SFTP (port 22)** thay FTP thông thường để mã hóa đường truyền.
+>  Ưu tiên **SFTP (port 22)** thay FTP (port 21) vì SFTP mã hóa toàn bộ dữ liệu trên đường truyền, không để lộ mật khẩu.
 
 ---
 
-### 2.2 Giải nén file
+### 4.2 Giải nén file
 
 **Qua File Manager:**
 
 **Bước 1:** Upload file `.zip` hoặc `.tar.gz` vào `public_html`.
 
-**Bước 2:** Chuột phải vào file → **Extract** → chỉ định thư mục đích → **Extract File(s)**.
+**Bước 2:** Chuột phải vào file → **Extract** → xác nhận thư mục đích → **Extract File(s)**.
 
-**Qua Terminal (file > 100MB):**
+**Qua Terminal (cPanel → Advanced → Terminal):**
 ```bash
 cd ~/public_html
 unzip archive.zip
@@ -174,353 +456,359 @@ unzip archive.zip
 tar -xzvf archive.tar.gz
 ```
 
-> ⚠️ Sau khi giải nén `.zip`, source code thường nằm trong `public_html/public_html/`. Cần **Select All → Move** ra đúng thư mục `public_html/`.
+>  **Lỗi hay gặp sau giải nén:** Source code nằm lồng trong `public_html/public_html/` thay vì đúng vị trí. Khắc phục: vào thư mục con → **Select All** → chuột phải → **Move** → đổi đường dẫn về `/home/iamhieu/public_html`.
 
 ---
 
-### 2.3 Phân quyền file (Chmod)
+### 4.3 Phân quyền file 
 
 **Qua File Manager:**
 
 Chọn file/thư mục → chuột phải → **Change Permissions** → nhập số quyền → **Change Permissions**.
 
+<img width="935" height="419" alt="image" src="https://github.com/user-attachments/assets/5b3384ae-7d4d-469f-9aaf-b514e891d621" />
+
 **Quyền chuẩn cho WordPress:**
 
-| Đối tượng | Quyền | Số |
-|-----------|-------|----|
-| Thư mục `public_html` | `rwxr-xr-x` | `755` |
-| File `.php`, `.html` | `rw-r--r--` | `644` |
-| File `wp-config.php` | `rw-------` | `600` |
-| Thư mục `wp-content/uploads` | `rwxrwxr-x` | `775` |
+| Đối tượng | Ký hiệu | Số | Lý do |
+|-----------|---------|-----|-------|
+| Thư mục `public_html` | `rwxr-xr-x` | `755` | Apache cần execute để vào thư mục |
+| File `.php`, `.html`, `.css`, `.js` | `rw-r--r--` | `644` | Đọc được, không execute trực tiếp |
+| File `wp-config.php` | `rw-------` | `600` | Chứa thông tin DB — chỉ owner đọc được |
+| Thư mục `wp-content/uploads` | `rwxrwxr-x` | `775` | WordPress cần ghi file upload |
 
 **Phân quyền hàng loạt qua Terminal:**
 ```bash
-# Tất cả thư mục → 755
+# Đặt 755 cho tất cả thư mục
 find ~/public_html -type d -exec chmod 755 {} \;
 
-# Tất cả file → 644
+# Đặt 644 cho tất cả file
 find ~/public_html -type f -exec chmod 644 {} \;
 
-# wp-config.php → 600
+# Riêng wp-config.php đặt 600
 chmod 600 ~/public_html/wp-config.php
 ```
 
-> ⚠️ **Lỗi thường gặp:**
-> - **403 Forbidden** → thư mục bị chmod `700` hoặc `777`. Sửa về `755`.
-> - **500 Internal Server Error** sau chmod → file `.php` bị set `777`. Sửa về `644`.
-> - **Không upload được ảnh WP** → thư mục `wp-content/uploads` cần ít nhất `755`.
+>  **Lỗi thường gặp liên quan chmod:**
+> - **403 Forbidden** → thư mục đang bị chmod `700` hoặc `777`. Sửa về `755`.
+> - **500 Internal Server Error** → file `.php` bị chmod `777` hoặc `000`. Sửa về `644`.
+> - **Không upload được ảnh lên WordPress** → `wp-content/uploads` thiếu quyền ghi. Sửa về `775`.
 
 ---
 
-## 3. Quản lý Tài khoản FTP
+## 5. Quản lý Tài khoản FTP
 
-FTP (File Transfer Protocol) cho phép quản lý file hosting qua phần mềm FTP client (FileZilla, WinSCP...). Tất cả gói hosting cPanel đều hỗ trợ FTP qua port **21**.
+FTP cho phép quản lý file hosting qua client (FileZilla, WinSCP...) mà không cần đăng nhập cPanel. Tất cả gói hosting cPanel hỗ trợ FTP qua port **21** và SFTP qua port **22**.
 
-### 3.1 Tạo tài khoản FTP
+### 5.1 Tạo tài khoản FTP
 
-**Bước 1:** cPanel → **Files** → **FTP Accounts**.
+**Đường dẫn:** cPanel → **Files** → **FTP Accounts**
 
-**Bước 2:** Nhấn **Create FTP Account** (hoặc điền thông tin trong form ở trên cùng).
-
-**Bước 3:** Điền thông tin:
+**Bước 1:** Điền thông tin trong form phía trên:
 
 | Trường | Giá trị ví dụ | Ghi chú |
 |--------|--------------|---------|
-| Log In | `ftpuser` | Tên đăng nhập đầy đủ: `ftpuser@hieucute.id.vn` |
-| Password | *(tạo mạnh)* | Dùng Password Generator |
-| Directory | `/home/hieu/public_html` | Giới hạn quyền truy cập trong thư mục này |
+| Log In | `ftpdev` | Tên đăng nhập đầy đủ sẽ là `ftpdev@hieucute.id.vn` |
+| Password | *(Password Generator)* | Đạt 100/100 điểm |
+| Directory | `/home/iamhieu/public_html` | Giới hạn truy cập trong thư mục này |
 | Quota | `500 MB` | Hoặc Unlimited |
 
-**Bước 4:** Nhấn **Create FTP Account**.
+**Bước 2:** Nhấn **Create FTP Account**.
 
-**Bước 5:** Mở FileZilla → nhập thông tin:
-
+**Bước 3:** Mở FileZilla → kết nối:
 ```
 Host:     ftp.hieucute.id.vn  (hoặc 103.159.51.228)
-Username: ftpuser@hieucute.id.vn
+Username: ftpdev@hieucute.id.vn
 Password: (mật khẩu vừa tạo)
-Port:     21
+Port:     21 (FTP) hoặc 22 (SFTP — ưu tiên)
 ```
 
-### 3.2 Quản lý và xóa tài khoản FTP
+### 5.2 Quản lý và xóa tài khoản FTP
 
-- cPanel → **FTP Accounts** → danh sách hiển thị bên dưới.
-- Nhấn **Change Password** để đổi mật khẩu.
-- Nhấn **Delete** → chọn có xóa thư mục hay không → xác nhận.
+- cPanel → **FTP Accounts** → danh sách hiển thị bên dưới form tạo.
+- **Change Password:** đổi mật khẩu FTP account.
+- **Change Quota:** thay đổi giới hạn dung lượng.
+- **Delete:** xóa account (chọn có xóa thư mục liên quan hay không).
 
-### 3.3 FTP mặc định
-
-Tài khoản FTP chính (dùng thông tin đăng nhập cPanel) luôn tồn tại và không thể xóa. Đây là tài khoản có quyền truy cập toàn bộ hosting.
-
-> ⚠️ **Lưu ý bảo mật:**
-> - Ưu tiên dùng **SFTP (port 22)** thay FTP thông thường để mã hóa dữ liệu truyền tải.
-> - Tạo FTP account riêng với thư mục giới hạn khi cần chia sẻ quyền cho bên thứ ba.
-> - Không dùng `Anonymous FTP` trên môi trường production.
+>  **Bảo mật FTP:**
+> - Tài khoản FTP chính (dùng thông tin cPanel) không thể xóa — có full quyền toàn bộ home directory.
+> - Khi cần chia sẻ quyền cho bên thứ ba (developer, designer), tạo FTP account riêng với **Directory giới hạn** vào đúng thư mục cần thiết.
+> - Không bật **Anonymous FTP** trên môi trường production.
 
 ---
 
-## 4. Quản lý Cơ sở dữ liệu MySQL
+## 6. Quản lý Cơ sở dữ liệu MySQL
 
-### 4.1 Tạo Database, User và gán quyền
+### 6.1 Tạo Database, User và gán quyền
 
-#### Cách 1: Database Wizard (khuyến nghị)
+**Đường dẫn:** cPanel → mục **Databases** (Ảnh 1 & 3) → **Database Wizard**
 
-**Bước 1:** cPanel → **Databases** → **MySQL Database Wizard**.
+#### Cách 1: Database Wizard 
 
-**Bước 2 – Tạo Database:** Nhập `wpdb` → **Next Step**.
-→ Tên thực tế: `hieu_wpdb` *(có prefix tài khoản cPanel)*.
+**Bước 1 — Tạo Database:**
 
-**Bước 3 – Tạo User:** Nhập `wpuser` + Password → **Create User**.
-→ Tên thực tế: `hieu_wpuser`.
+Nhập tên database, ví dụ `wpdb` → nhấn **Next Step**.
 
-**Bước 4 – Gán quyền:** Tích **ALL PRIVILEGES** → **Next Step**.
+**Bước 2 — Tạo Database User:**
 
-**Bước 5:** Lưu lại thông tin kết nối:
+Nhập Username `wpuser` → nhập Password  → nhấn **Create User**.
+
+**Bước 3 — Gán quyền:**
+
+Tích chọn **ALL PRIVILEGES** → nhấn **Next Step**.
+
+**Bước 4 — Lưu lại thông tin kết nối (dùng để điền vào wp-config.php):**
 
 ```
-DB_NAME:     hieu_wpdb
-DB_USER:     hieu_wpuser
-DB_PASSWORD: (mật khẩu vừa tạo)
+DB_NAME:     iamhieu_wpdb
+DB_USER:     iamhieu_wpuser
+DB_PASSWORD: .%3JN1g5t$KYLY*W
 DB_HOST:     localhost
 ```
+<img width="793" height="130" alt="image" src="https://github.com/user-attachments/assets/61fc80d9-f565-4824-a20a-947f515c2b96" />
 
-#### Cách 2: MySQL Databases (thủ công)
+#### Cách 2: MySQL Databases 
 
-**Bước 1:** cPanel → **MySQL Databases**.
+**Đường dẫn:** cPanel → **Databases** → **Manage My Databases** 
 
-**Tạo Database:** Nhập tên → **Create Database**.
+1. **Tạo Database:** nhập tên → **Create Database**.
+2. **Tạo User:** kéo xuống **MySQL Users** → nhập Username + Password(f8(=6$([(l$!o0)5) → **Create User**. 
+3. **Gán quyền:** mục **Add User To Database** → chọn User và Database → **Add** → tích **ALL PRIVILEGES** → **Make Changes**.
 
-**Tạo User:** Kéo xuống **MySQL Users** → nhập Username + Password → **Create User**.
-
-**Gán quyền:** Mục **Add User To Database** → chọn User và Database → **Add** → tích **ALL PRIVILEGES** → **Make Changes**.
+<img width="509" height="176" alt="image" src="https://github.com/user-attachments/assets/8b8fba59-3b54-44fe-a3ad-8ad3e7c01285" />
 
 #### Kiểm tra qua phpMyAdmin
 
-cPanel → **Databases** → **phpMyAdmin** → chọn database ở panel trái → xác nhận tồn tại.
+cPanel → **Databases** → **phpMyAdmin**  → chọn database ở panel trái để xác nhận đã tạo thành công.
 
-> ⚠️ **Lưu ý quan trọng:**
-> - Tên DB và User **tự động thêm prefix** tên tài khoản cPanel. Phải điền tên đầy đủ (có prefix) vào `wp-config.php`.
-> - Mật khẩu DB User phải đạt tối thiểu **65/100** theo thước đo của cPanel.
-> - Để truy cập DB từ IP ngoài: **Remote Database Access** → thêm IP cho phép.
+<img width="959" height="224" alt="image" src="https://github.com/user-attachments/assets/dfc6a274-09e0-4ca3-9717-0190716d99c8" />
+
 
 ---
 
-## 5. Bảo mật – Kích hoạt SSL miễn phí
+## 7. Bảo mật – Kích hoạt SSL
 
-### 5.1 AutoSSL (Let's Encrypt tự động)
+### 7.1 AutoSSL (Let's Encrypt)
 
-Hosting Nhân Hòa tích hợp sẵn AutoSSL — cấp SSL miễn phí, tự gia hạn, không cần can thiệp thủ công.
+AutoSSL cấp SSL miễn phí và tự động gia hạn, không cần can thiệp thủ công.
 
-**Bước 1:** cPanel → **Security** → **SSL/TLS Status**.
+**Đường dẫn:** cPanel → mục **Security**  → **SSL/TLS Certificates**
+
+**Bước 1:** cPanel → **Security** → **SSL/TLS Certificates** → tab **Domains**.
 
 **Bước 2:** Danh sách domain hiển thị trạng thái SSL hiện tại.
 
-**Bước 3:** Tick chọn `hieucute.id.vn` và `www.hieucute.id.vn` → nhấn **Run AutoSSL**.
+**Bước 3:** Tick chọn `hieucute.id.vn` và `www.hieucute.id.vn`.
 
-**Bước 4:** Chờ 1–3 phút → trạng thái chuyển ✅.
+**Bước 4:** Nhấn **Run AutoSSL** → chờ 1–3 phút.
 
-**Bước 5:** Kiểm tra tại `https://hieucute.id.vn`.
+**Bước 5:** Trạng thái chuyển từ  Self-signed sang ✅ Let's Encrypt.
+
+**Bước 6:** Kiểm tra tại `https://hieucute.id.vn` — biểu tượng ổ khóa xanh xuất hiện.
 
 ---
 
-### 5.2 Cài SSL có sẵn (từ ZeroSSL, Sectigo...) theo hướng dẫn Nhân Hòa
+### 7.2 Cài SSL có sẵn (từ ZeroSSL, Sectigo...)
 
-Nếu bạn đã có file chứng chỉ từ CA, thực hiện theo các bước:
+**Đường dẫn:** cPanel → **Security** → **SSL/TLS Certificates** → **Manage SSL Certificates** → **Install an SSL Certificate**
 
-**Bước 1:** cPanel → **Security** → **SSL/TLS** → **Manage SSL Sites**.
+**Bước 1:** Chọn domain `hieucute.id.vn`.
 
-**Bước 2:** Chọn domain `hieucute.id.vn` cần cài.
+**Bước 2:** Paste nội dung 3 file chứng chỉ:
 
-**Bước 3:** Paste nội dung 3 file chứng chỉ vào đúng ô:
-
-| Ô nhập | File tương ứng | Nội dung bắt đầu bằng |
-|--------|---------------|----------------------|
-| Certificate (CRT) | `certificate.crt` hoặc `.pem` | `-----BEGIN CERTIFICATE-----` |
+| Ô nhập | File | Nội dung bắt đầu bằng |
+|--------|------|-----------------------|
+| Certificate (CRT) | `certificate.crt` | `-----BEGIN CERTIFICATE-----` |
 | Private Key (KEY) | `server.key` | `-----BEGIN PRIVATE KEY-----` |
-| Certificate Authority Bundle (CABUNDLE) | `ca_bundle.crt` | `-----BEGIN CERTIFICATE-----` |
+| CA Bundle (CABUNDLE) | `ca_bundle.crt` | `-----BEGIN CERTIFICATE-----` |
 
-**Bước 4:** Nhấn **Install Certificate**.
-
-**Bước 5:** Quay lại cPanel → **Domains** → chọn `hieucute.id.vn` → bật **Force HTTPS Redirect**.
+**Bước 3:** Nhấn **Install Certificate**.
 
 ---
 
-### 5.3 Gỡ SSL cũ trước khi chạy lại AutoSSL (khi AutoSSL bị lỗi)
+### 7.3 Gỡ SSL cũ trước khi chạy lại AutoSSL (khi AutoSSL thất bại)
 
-Theo hướng dẫn Nhân Hòa, khi AutoSSL thất bại cần xóa sạch cert cũ trước:
+Khi AutoSSL fail liên tục, nguyên nhân thường là cert cũ còn xung đột. Xóa sạch trước:
 
-**Bước 1:** cPanel → **SSL/TLS** → **Private Keys** → xóa key cũ.
+**Bước 1:** cPanel → **SSL/TLS Certificates** → **Private Keys** → xóa key cũ của domain.
 
-**Bước 2:** **SSL/TLS** → **Certificates** → **Uninstall** cert cũ → **Delete Key**.
+**Bước 2:** **SSL/TLS Certificates** → **Certificates** → **Uninstall** cert cũ → **Delete Key**.
 
-**Bước 3:** **File Manager** → `public_html` → xóa thư mục `.well-known` (nếu có).
+**Bước 3:** cPanel → **File Manager** → `public_html` → xóa thư mục `.well-known` (nếu có).
 
-**Bước 4:** **SSL/TLS Status** → tick tất cả domain → **Run AutoSSL**.
+**Bước 4:** Quay lại **SSL/TLS Certificates** → tick tất cả domain → **Run AutoSSL**.
 
 **Bước 5:** Chờ 5–10 phút → kiểm tra lại.
 
 ---
 
-### 5.4 Cấu hình Force HTTPS Redirect
+### 7.4 Force HTTPS Redirect
 
-**Qua giao diện cPanel:**
+**Qua giao diện (cPanel 134):**
+
 cPanel → **Domains** → chọn `hieucute.id.vn` → bật toggle **Force HTTPS Redirect** → **Save**.
 
-**Qua `.htaccess`:**
+**Qua `.htaccess` (thủ công):**
 ```apache
 RewriteEngine On
 RewriteCond %{HTTPS} !=on
 RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
 ```
 
-> ⚠️ **Lưu ý và lỗi thường gặp:**
-> - **AutoSSL thất bại** → DNS chưa trỏ đúng hoặc port 80 bị block. Kiểm tra: `curl -I http://hieucute.id.vn`
-> - **Lỗi CAA record** → thêm: `hieucute.id.vn. CAA 0 issue "letsencrypt.org"`
-> - **Mixed Content sau HTTPS** → WordPress: Settings → General → đổi `http://` → `https://`. Cài plugin **Really Simple SSL**.
-> - **Chứng chỉ hết hạn** → AutoSSL tự gia hạn, nhưng nếu DNS thay đổi có thể thất bại. Kiểm tra log: WHM → **AutoSSL** → **Logs**.
 
 ---
 
-## 6. Quản lý Email & Chống Spam
+### 7.5 Lỗi thường gặp với SSL
 
-### 6.1 Tạo tài khoản Email theo tên miền
+| Lỗi | Nguyên nhân | Khắc phục |
+|-----|------------|-----------|
+| AutoSSL thất bại | DNS chưa trỏ đúng hoặc port 80 bị block | Kiểm tra DNS, mở port 80 trên firewall |
+| `CAA record prevents issuance` | DNS có CAA record không cho Let's Encrypt | Thêm `hieucute.id.vn. CAA 0 issue "letsencrypt.org"` |
+| Mixed Content sau HTTPS | Resource load qua `http://` | WP: đổi địa chỉ sang https, cài plugin Really Simple SSL |
+| Self-signed cert vẫn hiện | AutoSSL chưa chạy hoặc đang pending | Run AutoSSL, kiểm tra log WHM → AutoSSL → Logs |
 
-**Bước 1:** cPanel → **Email** → **Email Accounts**.
+---
 
-**Bước 2:** Nhấn **Create (+)**.
+## 8. Quản lý Email & Chống Spam
 
-**Bước 3:** Điền thông tin:
+### 8.1 Tạo tài khoản Email theo tên miền
+
+**Đường dẫn:** cPanel → mục **Email**  → **Email Accounts**
+
+**Bước 1:** Nhấn **Create (+)** ở góc phải trên.
+
+**Bước 2:** Điền thông tin:
 
 | Trường | Giá trị | Ghi chú |
 |--------|---------|---------|
-| Username | `info` | Địa chỉ: `info@hieucute.id.vn` |
+| Username | `info` | Địa chỉ đầy đủ: `info@hieucute.id.vn` |
 | Domain | `hieucute.id.vn` | Chọn từ dropdown |
-| Password | *(tạo mạnh)* | Dùng Password Generator |
+| Password | *(Password Generator)* | Đạt 100/100 điểm |
 | Storage Space | `1024 MB` | Hoặc Unlimited nếu gói cho phép |
 
-**Bước 4:** Nhấn **Create**.
+<img width="926" height="421" alt="image" src="https://github.com/user-attachments/assets/95af89f3-9f88-4409-92c1-6e30067a0c36" />
 
-**Bước 5:** Truy cập Webmail:
+**Bước 3:** Nhấn **Create**.
+
+**Bước 4:** Truy cập Webmail qua:
 - `https://hieucute.id.vn/webmail`
-- `https://103.159.51.228/webmail`
+- `https://103.159.51.228:2096`
 - Hoặc trong danh sách Email Accounts → nhấn **Check Email**.
 
-> ⚠️ Khi đăng nhập Webmail phải nhập **đầy đủ**: `info@hieucute.id.vn`, không chỉ `info`.
+>  Khi đăng nhập Webmail (cổng 2096 hoặc /webmail) phải nhập đầy đủ địa chỉ email: `info@hieucute.id.vn`.
+
+<img width="945" height="415" alt="image" src="https://github.com/user-attachments/assets/43ee0675-d939-4778-8a32-a5c32b9f066b" />
 
 ---
 
-### 6.2 Restrict – Giới hạn email gửi đi (chống spam từ tài khoản bị xâm phạm)
 
-Khi nghi ngờ một địa chỉ email đang bị spam hoặc bị xâm phạm, dùng tính năng **Restrict** để giới hạn chiều gửi đi.
+### 8.2 Cấu hình SPF, DKIM, DMARC
 
-**Bước 1:** cPanel → **Email** → **Email Accounts**.
+**Đường dẫn:** cPanel → **Email**  → **Email Deliverability**
 
-**Bước 2:** Tìm email cần hạn chế → nhấn **Manage**.
-
-**Bước 3:** Tìm mục **Restrictions** (hoặc **Outgoing Mail Limit**).
-
-**Bước 4:** Đặt giới hạn số email gửi mỗi giờ → **Save**.
-
-> Tính năng này đặc biệt hữu ích khi phát hiện một email trong domain đang gửi spam, giúp ngăn chặn nhanh mà không cần xóa tài khoản.
-
----
-
-### 6.3 Cấu hình SPF, DKIM, DMARC trong cPanel
-
-Truy cập trực tiếp: cPanel → **Email** → **Email Deliverability**.
-
-Trang này hiển thị trạng thái SPF, DKIM, DMARC của từng domain. Nhấn **Repair** để cPanel tự động sửa nếu phát hiện vấn đề.
+Trang này hiển thị trạng thái SPF, DKIM, DMARC của từng domain và cho phép tự động sửa bằng nút **Repair**.
 
 #### SPF
+
+Bản ghi SPF chuẩn cho `hieucute.id.vn` (server IP `103.159.51.228`):
 
 | Host | Type | Value |
 |------|------|-------|
 | `@` | TXT | `v=spf1 ip4:103.159.51.228 ~all` |
 
+> 💡 `~all` = SoftFail. Sau khi ổn định đổi sang `-all` để bảo mật tốt hơn.
+
 #### DKIM
 
-**Bước 1:** Email Deliverability → chọn `hieucute.id.vn` → nhấn **Enable** DKIM.
+**Bước 1:** Email Deliverability → chọn `hieucute.id.vn` → nhấn **Enable** hoặc **Repair** nếu chưa bật.
 
-**Bước 2:** cPanel tự tạo key và hiển thị bản ghi DNS:
+**Bước 2:** cPanel tự tạo cặp key và hiển thị bản ghi DNS cần thêm:
 ```
 default._domainkey.hieucute.id.vn   TXT   "v=DKIM1; k=rsa; p=MIIBIjAN..."
 ```
 
-**Bước 3:** Copy bản ghi này → vào DNS Zone tại Nhân Hòa → thêm bản ghi TXT.
+**Bước 3:** Nếu DNS quản lý bên ngoài cPanel : copy bản ghi → vào DNS Zone → thêm TXT record.
 
 **Kiểm tra:**
 ```bash
 dig TXT default._domainkey.hieucute.id.vn
 ```
+<img width="613" height="301" alt="image" src="https://github.com/user-attachments/assets/b9bc345d-0925-4465-bd05-f76fab337999" />
 
-#### DMARC – Triển khai theo lộ trình
+#### DMARC – Triển khai theo lộ trình 3 giai đoạn
 
-**Thêm vào Zone Editor:** cPanel → **Domains** → **Zone Editor** → `hieucute.id.vn` → **Manage** → **Add Record** → Type: TXT.
+**Thêm vào Zone Editor:** cPanel → **Domains**  → **Zone Editor** → `hieucute.id.vn` → **Manage** → **Add Record** → Type: TXT.
 
-| Giai đoạn | Host | Value |
-|-----------|------|-------|
-| 1 – Mới cài | `_dmarc` | `v=DMARC1; p=none; rua=mailto:admin@hieucute.id.vn` |
-| 2 – Sau 1–2 tuần | `_dmarc` | `v=DMARC1; p=quarantine; pct=100; rua=mailto:admin@hieucute.id.vn` |
-| 3 – Ổn định | `_dmarc` | `v=DMARC1; p=reject; pct=100; rua=mailto:admin@hieucute.id.vn` |
+| Giai đoạn | Thời điểm | Host | Value |
+|-----------|----------|------|-------|
+| **1 – Giám sát** | Mới cài, chưa chắc | `_dmarc` | `v=DMARC1; p=none; rua=mailto:admin@hieucute.id.vn` |
+| **2 – Kiểm dịch** | Sau 1–2 tuần xem báo cáo | `_dmarc` | `v=DMARC1; p=quarantine; pct=100; rua=mailto:admin@hieucute.id.vn` |
+| **3 – Từ chối** | Khi đã ổn định hoàn toàn | `_dmarc` | `v=DMARC1; p=reject; pct=100; rua=mailto:admin@hieucute.id.vn` |
 
-**Kiểm tra toàn bộ:**
+**Kiểm tra toàn bộ email authentication:**
 ```bash
 dig TXT hieucute.id.vn | grep spf
 dig TXT default._domainkey.hieucute.id.vn
 dig TXT _dmarc.hieucute.id.vn
 ```
 
-Kiểm tra online: https://mxtoolbox.com/emailhealth/
+Kiểm tra online: [https://mxtoolbox.com/emailhealth/](https://mxtoolbox.com/emailhealth/)
 
 ---
 
-## 7. Mailing List
+## 9. Mailing List
 
-### 7.1 Tạo Mailing List
+### 9.1 Tạo Mailing List
 
-**Bước 1:** cPanel → **Email** → **Mailing Lists**.
+**Đường dẫn:** cPanel → **Email**  → **Mailing Lists**
 
-**Bước 2:** Điền thông tin:
+**Bước 1:** Điền thông tin:
 
 | Trường | Ví dụ | Ghi chú |
 |--------|-------|---------|
 | List Name | `newsletter` | Địa chỉ: `newsletter@hieucute.id.vn` |
 | Domain | `hieucute.id.vn` | |
-| Password | *(tạo mạnh)* | Dùng để quản lý danh sách |
+| Password | *(Password Generator)* | Dùng để đăng nhập giao diện quản lý Mailman |
 
-**Bước 3:** Nhấn **Add Mailing List**.
+**Bước 2:** Nhấn **Add Mailing List**.
 
-### 7.2 Giới hạn thành viên được phép gửi vào Mailing List
+<img width="796" height="142" alt="image" src="https://github.com/user-attachments/assets/613138d2-8b66-4a5a-a850-90151ca61478" />
 
-Mặc định cPanel cho phép **tất cả thành viên** của Mailing List gửi mail vào danh sách. Nếu chỉ muốn một số email cụ thể được phép gửi:
+---
 
-**Bước 1:** cPanel → **Email** → **Mailing Lists** → nhấn **Manage** (hoặc **Edit**) cạnh Mailing List cần cấu hình.
+### 9.2 Giới hạn thành viên gửi vào Mailing List
 
-**Bước 2:** Hệ thống chuyển đến giao diện quản lý **Mailman**.
+Mặc định cPanel cho phép **tất cả thành viên** gửi mail vào list. Để chỉ cho phép một số email cụ thể:
+
+**Bước 1:** cPanel → **Mailing Lists** → nhấn **Manage** cạnh list cần cấu hình.
+
+**Bước 2:** Hệ thống chuyển sang giao diện **Mailman**.
 
 **Bước 3:** Vào **Privacy options** → **Sender filters**.
 
 **Bước 4:** Tại mục **"Restrict posting privilege to list members"**:
-- Chọn **Yes** để chỉ thành viên trong list mới được gửi.
-- Hoặc thêm địa chỉ cụ thể vào **"List of non-member addresses whose postings should be automatically accepted"**.
+- Chọn **Yes** → chỉ thành viên trong list mới được gửi.
+- Hoặc thêm email cụ thể vào **"List of non-member addresses whose postings should be automatically accepted"**.
 
 **Bước 5:** Nhấn **Submit Your Changes**.
 
-> ⚠️ Chỉ email được liệt kê mới có thể gửi vào List — email từ người khác sẽ bị giữ lại chờ duyệt hoặc bị từ chối tùy cấu hình.
+>  Email từ địa chỉ không được liệt kê sẽ bị giữ lại chờ duyệt hoặc từ chối — tùy cấu hình **"Action to take for postings from non-members"**.
+
+<img width="943" height="355" alt="image" src="https://github.com/user-attachments/assets/376c1ebc-e8d9-4614-9981-fb29f1505137" />
 
 ---
 
-## 8. Cron Jobs
+## 10. Cron Jobs
 
-### 8.1 Cron Job là gì
+### 10.1 Cron Job là gì
 
-Cron Job là tác vụ được đặt lịch chạy tự động theo thời gian định sẵn trên server — không cần thao tác thủ công. Ứng dụng phổ biến: tự động backup, gửi email định kỳ, đồng bộ dữ liệu, dọn dẹp file log...
+Cron Job là tác vụ chạy tự động theo lịch trên server — không cần thao tác thủ công. Dùng cho: tự động backup, gửi email định kỳ, dọn dẹp file log, gia hạn SSL...
 
-### 8.2 Tạo Cron Job trong cPanel
+**Đường dẫn:** cPanel → mục **Advanced**  → **Cron Jobs**
 
-**Bước 1:** cPanel → **Advanced** → **Cron Jobs**.
+### 10.2 Tạo Cron Job
 
-**Bước 2:** Mục **Add New Cron Job** — điền thời gian chạy:
+**Bước 1:** Mục **Add New Cron Job** → điền thời gian chạy:
 
 | Trường | Ý nghĩa | Phạm vi |
 |--------|---------|---------|
@@ -530,201 +818,183 @@ Cron Job là tác vụ được đặt lịch chạy tự động theo thời gi
 | Month | Tháng | 1–12 |
 | Weekday | Thứ trong tuần | 0–7 (0 và 7 đều là Chủ nhật) |
 
-Dùng `*` = mọi giá trị (mỗi phút, mỗi giờ...).
+`*` = mọi giá trị.
 
-**Bước 3:** Nhập lệnh cần chạy vào ô **Command**.
+**Bước 2:** Nhập lệnh vào ô **Command** — dùng đường dẫn **tuyệt đối**.
 
-**Bước 4:** Nhấn **Add New Cron Job**.
+**Bước 3:** Nhấn **Add New Cron Job**.
 
-### 8.3 Bảng cú pháp cron phổ biến
+### 10.3 Cú pháp cron phổ biến
 
 | Cú pháp | Ý nghĩa |
 |---------|---------|
 | `* * * * *` | Mỗi phút |
-| `0 * * * *` | Mỗi giờ (vào phút 0) |
+| `0 * * * *` | Mỗi giờ (phút 0) |
 | `0 2 * * *` | Mỗi ngày lúc 2:00 sáng |
 | `0 2 * * 0` | Mỗi Chủ nhật lúc 2:00 sáng |
 | `0 2 1 * *` | Ngày 1 mỗi tháng lúc 2:00 sáng |
 | `*/5 * * * *` | Mỗi 5 phút |
-| `0 2,14 * * *` | Mỗi ngày lúc 2:00 và 14:00 |
 
-### 8.4 Ví dụ thực tế
+### 10.4 Ví dụ thực tế
 
-**Gia hạn SSL tự động (Let's Encrypt):**
-```bash
-0 12 * * * /usr/bin/certbot renew --quiet
-```
-
-**Backup database hàng ngày lúc 2:00 sáng:**
-```bash
-0 2 * * * mysqldump -u hieu_wpuser -p'password' hieu_wpdb | gzip > /home/hieu/backups/db_$(date +\%Y-\%m-\%d).sql.gz
-```
-
-**Chạy WordPress cron (thay WP-Cron mặc định để tăng hiệu năng):**
+**WordPress cron**
 ```bash
 */15 * * * * wget -q -O /dev/null "https://hieucute.id.vn/wp-cron.php?doing_wp_cron"
 ```
 
+**Backup database hàng ngày lúc 2:00 sáng:**
+```bash
+0 2 * * * mysqldump -u iamhieu_wpuser -p'password' iamhieu_wpdb | gzip > /home/iamhieu/backups/db_$(date +\%Y-\%m-\%d).sql.gz
+```
+
 **Xóa file backup cũ hơn 7 ngày:**
 ```bash
-0 3 * * * find /home/hieu/backups -type f -mtime +7 -delete
+0 3 * * * find /home/iamhieu/backups -type f -mtime +7 -delete
 ```
 
-**Script backup tự động (tạo trên VPS, đặt cron chạy):**
+**Script backup tự động hoàn chỉnh:**
 ```bash
-# Tạo script /home/hieu/backup.sh
 #!/bin/bash
-BACKUP_DIR="/home/hieu/backups/$(date +%Y-%m-%d)"
-mkdir -p $BACKUP_DIR
+# Lưu tại /home/iamhieu/backup.sh
+# chmod +x /home/iamhieu/backup.sh
+
+BACKUP_DIR="/home/iamhieu/backups/$(date +%Y-%m-%d)"
+mkdir -p "$BACKUP_DIR"
 
 # Backup database
-mysqldump -u hieu_wpuser -p'password' hieu_wpdb | gzip -9 > $BACKUP_DIR/db_hieucute.sql.gz
+mysqldump -u iamhieu_wpuser -p'password' iamhieu_wpdb \
+  | gzip -9 > "$BACKUP_DIR/db_hieucute.sql.gz"
 
 # Backup source code
-zip -r $BACKUP_DIR/source_hieucute.zip /home/hieu/public_html/ -q
-
-echo "Backup hoàn tất: $BACKUP_DIR"
+zip -r "$BACKUP_DIR/source_hieucute.zip" /home/iamhieu/public_html/ -q
 
 # Xóa backup cũ hơn 3 ngày
-find /home/hieu/backups -type d -mtime +3 -exec rm -rf {} +
-```
+find /home/iamhieu/backups -type d -mtime +3 -exec rm -rf {} + 2>/dev/null
 
-```bash
-chmod +x /home/hieu/backup.sh
+echo "Backup hoàn tất: $BACKUP_DIR"
 ```
 
 Cron chạy hàng ngày lúc 1:00 sáng:
 ```
-0 1 * * * /home/hieu/backup.sh
+0 1 * * * /home/iamhieu/backup.sh
 ```
 
-> ⚠️ **Lưu ý:**
-> - Script kích hoạt Cron Job có thể chạy lệnh trực tiếp trên server → kiểm tra kỹ script trước khi đặt lịch.
-> - Dùng đường dẫn **tuyệt đối** trong lệnh cron (ví dụ `/usr/bin/php` thay vì chỉ `php`).
+>  **Lưu ý khi dùng Cron Job:**
+> - Luôn dùng **đường dẫn tuyệt đối** (ví dụ `/usr/bin/php` thay vì `php`).
 > - Để nhận thông báo lỗi qua email: thêm `MAILTO=admin@hieucute.id.vn` ở đầu crontab.
+> - Test script thủ công trước khi đặt cron.
 
 ---
 
-## 9. Backup & Restore (cấp User)
+## 11. Backup & Restore
 
-### 9.1 Tạo Full Backup thủ công (theo hướng dẫn Nhân Hòa)
+### 11.1 Tạo Full Backup (cấp User)
 
-**Bước 1:** cPanel → **Files** → **Backup Wizard**.
+**Đường dẫn:** cPanel → **Files**  → **Backup Wizard**
 
-**Bước 2:** Chọn **Back Up**.
+**Bước 1:** Nhấn **Back Up**.
 
-**Bước 3:** Chọn loại backup:
+**Bước 2:** Chọn loại backup:
 
 | Loại | Nội dung | Dùng khi |
 |------|----------|---------|
-| **Full Account Backup** | Toàn bộ: file, DB, email, DNS, cấu hình | Di chuyển hosting, backup định kỳ |
-| **Home Directory** | Chỉ file trong `/home/hieu/` | Backup code nhanh |
-| **MySQL Databases** | Chỉ database | Trước khi cập nhật WordPress |
+| **Full Account Backup** | Toàn bộ: file, DB, email, DNS, cấu hình | Di chuyển hosting, backup tổng thể |
+| **Home Directory** | Chỉ file trong `/home/iamhieu/` | Backup code nhanh |
+| **MySQL Databases** | Chỉ database | Trước khi cập nhật WordPress/plugin |
 
-**Bước 4:** Chọn **Full Account Backup** → chọn đích lưu:
+**Bước 3:** Chọn **Full Account Backup** → chọn đích lưu:
 
 | Đích | Mô tả |
 |------|-------|
-| **Home Directory** | Lưu tại `/home/hieu/` trên server |
-| **Remote FTP Server** | Gửi sang FTP server backup |
-| **Secure Copy (SCP)** | Gửi qua SSH |
+| Home Directory | Lưu tại `/home/iamhieu/` trên server |
+| Remote FTP Server | Gửi sang FTP server backup |
+| Secure Copy (SCP) | Gửi qua SSH an toàn |
 
-**Bước 5:** Điền email nhận thông báo → **Generate Backup**.
+**Bước 4:** Điền email nhận thông báo hoàn tất → **Generate Backup**.
 
-**Bước 6:** Tải file backup về máy:
-- File Manager → tìm file `.tar.gz` trong thư mục home → chuột phải → **Download**.
+**Bước 5:** Tải file `.tar.gz` về máy:
+
+File Manager → tìm file `.tar.gz` trong home directory → chuột phải → **Download**.
 
 ---
 
-### 9.2 Backup nhanh từng phần
+### 11.2 Backup nhanh từng phần
 
 **Backup database:**
-cPanel → **Files** → **Backup** → **Download a MySQL Database Backup** → chọn database.
+cPanel → **Files** → **Backup** → **Download a MySQL Database Backup** → chọn database → tải về.
 
 **Backup thư mục Home:**
-cPanel → **Files** → **Backup** → **Download a Home Directory Backup**.
+cPanel → **Files** → **Backup** → **Download a Home Directory Backup** → tải về.
 
 ---
 
-### 9.3 Restore – Quy trình chi tiết theo Nhân Hòa
+### 11.3 Restore
 
 #### Restore Source Code
 
 **Bước 1:** cPanel → **Backup Wizard** → **Restore** → **Home Directory** → chọn file `.tar.gz` → **Upload**.
 
-**Bước 2:** Sau khi hệ thống giải nén, vào **File Manager**:
-- Chuột phải vào file backup → **Extract** (không điền thêm gì) → giải nén ra folder tên tương tự.
-- Vào folder vừa tạo → `HomeDir` → `public_html` → **Select All** → chuột phải → **Move**.
-- Đổi đường dẫn đích về `/home/hieu/public_html` → **Move Files**.
-
-**Bước 3:** Upload lại source code nếu cần:
-- Nén source thành `public_html.zip` → upload lên `public_html` → giải nén.
-- Source sẽ nằm trong `public_html/public_html/` → **Select All** → **Move** ra `public_html/`.
+**Bước 2:** Vào **File Manager** sau khi hệ thống giải nén:
+- Chuột phải file backup → **Extract** → giải nén ra folder mới.
+- Vào folder → `HomeDir` → `public_html` → **Select All** → chuột phải → **Move**.
+- Đổi đường dẫn đích về `/home/iamhieu/public_html` → **Move Files**.
 
 #### Restore MySQL Database
 
-**Bước 1:** cPanel → **Backup Wizard** → **Restore** → **MySQL Databases** → chọn file `.sql.gz` → **Upload**.
+**Cách 1:** cPanel → **Backup Wizard** → **Restore** → **MySQL Databases** → chọn file `.sql.gz` → **Upload**.
 
-**Bước 2:** Hoặc import qua phpMyAdmin:
-- phpMyAdmin → chọn database `hieu_wpdb` → tab **Import** → chọn file SQL → **Go**.
+**Cách 2:** phpMyAdmin → chọn database `iamhieu_wpdb` → tab **Import** → chọn file SQL → **Go**.
 
-> ⚠️ **Lưu ý quan trọng:**
-> - **Restore sẽ ghi đè dữ liệu hiện tại** → luôn tạo backup mới trước khi restore bản cũ.
-> - Đảm bảo **database đích đã tồn tại** trước khi import file SQL.
-> - File **Full Account Backup** (`.tar.gz` tổng hợp) cần restore qua **WHM** → **Restore a Full Backup/cpmove File** — không restore được qua cPanel user thường (xem mục 12.9).
+>  **Lưu ý quan trọng:**
+> - **Restore ghi đè dữ liệu hiện tại** — luôn tạo backup mới nhất trước khi restore bản cũ.
+> - Database đích phải **tồn tại sẵn** trước khi import file SQL vào.
+> - **Full Account Backup** (`.tar.gz` tổng hợp) chỉ restore được qua **WHM → Restore a Full Backup/cpmove File** — không restore được qua cPanel user thông thường.
 
 ---
 
-## 10. Triển khai Next.js trên cPanel
+## 12. Triển khai Next.js trên cPanel
 
-cPanel hỗ trợ chạy ứng dụng Node.js (bao gồm Next.js) thông qua tính năng **Setup Node.js App** dùng Phusion Passenger.
+cPanel hỗ trợ Node.js (bao gồm Next.js) thông qua **Setup Node.js App** (Phusion Passenger).
 
-### 10.1 Yêu cầu
+### 12.1 Yêu cầu
 
-- cPanel có tính năng **Setup Node.js App** (kiểm tra trong mục **Software**).
-- Node.js version phù hợp với Next.js (Node ≥ 18 cho Next.js 14+).
+- cPanel có tính năng **Setup Node.js App** trong mục **Software**.
+- Node.js ≥ 18 cho Next.js 14+.
 
-### 10.2 Tạo Node.js App
+### 12.2 Tạo Node.js Application
 
-**Bước 1:** cPanel → **Software** → **Setup Node.js App**.
+**Đường dẫn:** cPanel → **Software** → **Setup Node.js App** → **Create Application**
 
-**Bước 2:** Nhấn **Create Application**.
-
-**Bước 3:** Điền thông tin:
-
-| Trường | Giá trị ví dụ | Ghi chú |
-|--------|--------------|---------|
-| Node.js version | `18.x` hoặc `20.x` | Chọn phiên bản phù hợp |
+| Trường | Giá trị | Ghi chú |
+|--------|---------|---------|
+| Node.js version | `18.x` hoặc `20.x` | Chọn phiên bản phù hợp Next.js |
 | Application mode | `Production` | |
-| Application root | `nextjs_app` | Thư mục chứa source, tương đối với home |
-| Application URL | `hieucute.id.vn` | Domain muốn chạy |
-| Application startup file | `app.js` | File khởi động (tự tạo ở bước sau) |
+| Application root | `nextjs_app` | Tương đối so với home directory |
+| Application URL | `hieucute.id.vn` | Domain chạy ứng dụng |
+| Application startup file | `app.js` | File khởi động — tạo ở bước sau |
 
-**Bước 4:** Nhấn **Create** → app được tạo.
+Nhấn **Create**.
 
-### 10.3 Cài đặt Next.js
+### 12.3 Cài đặt Next.js qua Terminal
 
-**Bước 1:** Copy đường dẫn terminal từ giao diện Setup Node.js App → truy cập **Terminal** trong cPanel (Advanced → Terminal).
+**Đường dẫn:** cPanel → **Advanced**  → **Terminal**
 
-**Bước 2:** Vào thư mục app và xóa file mặc định:
 ```bash
+# Vào thư mục ứng dụng
 cd ~/nextjs_app
+
+# Xóa file mặc định
 rm -rf *
-```
 
-**Bước 3:** Khởi tạo project Next.js:
-```bash
+# Tạo project Next.js mới
 npx create-next-app@latest . --yes
-```
 
-**Bước 4:** Build project:
-```bash
+# Build project
 npm run build
 ```
 
-### 10.4 Tạo file khởi động app.js
+### 12.4 Tạo file khởi động app.js
 
-Tạo file `app.js` trong thư mục project:
 ```javascript
 const { createServer } = require('http');
 const { parse } = require('url');
@@ -743,7 +1013,7 @@ app.prepare().then(() => {
             const parsedUrl = parse(req.url, true);
             await handle(req, res, parsedUrl);
         } catch (err) {
-            console.error('Error occurred handling', req.url, err);
+            console.error('Error:', req.url, err);
             res.statusCode = 500;
             res.end('internal server error');
         }
@@ -754,38 +1024,36 @@ app.prepare().then(() => {
 });
 ```
 
-### 10.5 Khởi động App
+### 12.5 Khởi động ứng dụng
 
-**Bước 1:** cPanel → **Setup Node.js App** → tìm app `hieucute.id.vn`.
+cPanel → **Setup Node.js App** → tìm app `hieucute.id.vn` → **Stop App** → **Start App**.
 
-**Bước 2:** Nhấn **Stop App** → **Start App** để áp dụng thay đổi.
+Truy cập `https://hieucute.id.vn` để kiểm tra.
 
-**Bước 3:** Truy cập `https://hieucute.id.vn` để kiểm tra.
-
-> ⚠️ **Lưu ý:**
-> - Nếu hosting không có Terminal: liên hệ kỹ thuật Nhân Hòa để enable tính năng.
-> - Sau mỗi lần thay đổi code cần Stop → Start lại app.
-> - Biến môi trường (API keys, DB...) điền vào ô **Environment variables** trong Setup Node.js App.
-> - Next.js với `export` (Static) không cần Node.js runtime — có thể deploy thẳng file tĩnh vào `public_html`.
+>  **Lưu ý:**
+> - Mỗi lần thay đổi code: Stop → Start lại app.
+> - Biến môi trường (API keys, DB connection string...): điền vào ô **Environment variables** trong Setup Node.js App — không hardcode vào file.
+> - Next.js dạng Static Export không cần Node.js runtime — build xong copy thư mục `out/` vào `public_html/` là đủ.
+> - Nếu không có Terminal: liên hệ Nhân Hòa để bật tính năng.
 
 ---
 
-## 11. 5 lỗi phổ biến nhất trên cPanel 134 / Ubuntu 22.04
+## 13. 5 lỗi phổ biến nhất
 
-### Lỗi 1 – Website hiển thị "500 Internal Server Error"
+### Lỗi 1 – "500 Internal Server Error"
 
 **Nguyên nhân phổ biến:**
-- File `.htaccess` bị sai cú pháp
-- Quyền file sai (PHP file bị chmod 777 hoặc 000)
-- PHP version không tương thích
+- `.htaccess` sai cú pháp
+- File `.php` bị chmod sai (777 hoặc 000)
+- PHP version không tương thích với code
 
 **Kiểm tra log:**
-- cPanel → **Metrics** → **Errors**
+- cPanel → **Metrics**  → **Errors**
 - File Manager → `public_html/error_log`
 
 **Khắc phục:**
 ```bash
-# Đổi tên .htaccess để test
+# Đổi tên .htaccess để loại trừ nguyên nhân
 mv ~/public_html/.htaccess ~/public_html/.htaccess_bak
 
 # Sửa quyền hàng loạt
@@ -793,88 +1061,90 @@ find ~/public_html -type f -name "*.php" -exec chmod 644 {} \;
 find ~/public_html -type d -exec chmod 755 {} \;
 ```
 
-- cPanel → **Software** → **MultiPHP Manager** → đổi PHP version.
+cPanel → **Software** → **MultiPHP Manager** → đổi PHP version cho `hieucute.id.vn`.
 
 ---
 
 ### Lỗi 2 – Email gửi vào Spam hoặc bị từ chối
 
 **Nguyên nhân phổ biến:**
-- Thiếu SPF, DKIM, DMARC
+- Thiếu SPF, DKIM, DMARC (xem mục 8.3)
 - IP `103.159.51.228` bị blacklist
 - Thiếu PTR record (Reverse DNS)
 
-**Kiểm tra log:**
-- cPanel → **Email** → **Email Deliverability**
-- cPanel → **Email** → **Track Delivery**
+**Kiểm tra:**
+- cPanel → **Email** → **Email Deliverability** → xem trạng thái từng record
+- cPanel → **Email** → **Track Delivery** → nhập địa chỉ → xem chi tiết
 
 **Khắc phục:**
-1. Email Deliverability → **Repair** để tự động sửa SPF/DKIM.
-2. Kiểm tra blacklist: https://mxtoolbox.com/blacklists.aspx
+1. Email Deliverability → nhấn **Repair** để tự sửa SPF/DKIM.
+2. Kiểm tra blacklist: [https://mxtoolbox.com/blacklists.aspx](https://mxtoolbox.com/blacklists.aspx)
 3. Liên hệ Nhân Hòa tạo PTR record: `103.159.51.228` → `mail.hieucute.id.vn`.
 
 ---
 
-### Lỗi 3 – AutoSSL thất bại cho hieucute.id.vn
+### Lỗi 3 – AutoSSL thất bại
 
 **Nguyên nhân phổ biến:**
 - DNS chưa trỏ `hieucute.id.vn` về `103.159.51.228`
-- Port 80 bị block
-- Cert cũ bị conflict
+- Port 80 bị block bởi firewall
+- Còn cert cũ xung đột (đặc biệt với self-signed như trong Ảnh 1)
 
 **Kiểm tra:**
 ```bash
-dig A hieucute.id.vn                    # Phải trả về 103.159.51.228
-curl -I http://hieucute.id.vn           # Server phải phản hồi
-dig CAA hieucute.id.vn                  # Kiểm tra CAA record
+dig A hieucute.id.vn +short        # Phải trả về 103.159.51.228
+curl -I http://hieucute.id.vn       # Server phải phản hồi qua port 80
+dig CAA hieucute.id.vn              # Kiểm tra CAA record có chặn Let's Encrypt không
 ```
 
 **Khắc phục:**
-- Xóa cert cũ (theo bước 5.3) → Run AutoSSL lại.
-- Nếu vẫn lỗi: kiểm tra firewall VPS có mở port 80 không.
+- Làm quy trình gỡ cert cũ (mục 7.3) → Run AutoSSL lại.
+- Nếu vẫn fail: kiểm tra CSF/iptables có block port 80 không.
 
 ---
 
-### Lỗi 4 – WordPress lỗi "Error establishing a database connection"
+### Lỗi 4 – WordPress "Error establishing a database connection"
 
 **Nguyên nhân phổ biến:**
-- Sai thông tin DB trong `wp-config.php` — thường do **quên prefix** tên tài khoản cPanel.
+- Sai thông tin DB trong `wp-config.php` — thường do **quên prefix `iamhieu_`**.
 
 **Kiểm tra:**
-- phpMyAdmin → thử đăng nhập bằng DB user/password để xác nhận thông tin.
+- phpMyAdmin → đăng nhập bằng DB user/password để xác nhận thông tin đúng.
 
 **Khắc phục:**
 
 File Manager → `public_html/wp-config.php` → **Edit**:
 ```php
-define( 'DB_NAME',     'hieu_wpdb' );    // Phải có prefix "hieu_"
-define( 'DB_USER',     'hieu_wpuser' );  // Phải có prefix "hieu_"
+define( 'DB_NAME',     'iamhieu_wpdb' );    // Phải có prefix "iamhieu_"
+define( 'DB_USER',     'iamhieu_wpuser' );  // Phải có prefix "iamhieu_"
 define( 'DB_PASSWORD', 'correct_password' );
 define( 'DB_HOST',     'localhost' );
 ```
 
-Nếu quên mật khẩu DB: cPanel → **MySQL Databases** → **Current Users** → **Change Password**.
+Nếu quên mật khẩu DB: cPanel → **Manage My Databases** → **Current Users** → **Change Password**.
 
 ---
 
 ### Lỗi 5 – Upload file lỗi "413 Request Entity Too Large" hoặc timeout
 
-**Nguyên nhân:** Vượt giới hạn `upload_max_filesize` hoặc `post_max_size` trong PHP.
+**Nguyên nhân:** Vượt giới hạn PHP `upload_max_filesize` hoặc `post_max_size`.
 
-**Kiểm tra log:**
-- cPanel → **Metrics** → **Errors** → tìm dòng `413`
+**Kiểm tra:** cPanel → **Metrics** → **Errors** → tìm dòng `413`.
 
 **Khắc phục:**
 
-**Cách 1: MultiPHP INI Editor:**
+**Cách 1: MultiPHP INI Editor (Ảnh 3 → Software → MultiPHP INI Editor)**
+
 cPanel → **Software** → **MultiPHP INI Editor** → chọn `hieucute.id.vn` → sửa:
 
-| Directive | Giá trị |
-|-----------|---------|
+| Directive | Giá trị khuyến nghị |
+|-----------|---------------------|
 | `upload_max_filesize` | `128M` |
 | `post_max_size` | `128M` |
 | `max_execution_time` | `300` |
 | `memory_limit` | `256M` |
+
+Nhấn **Apply**.
 
 **Cách 2: File `.htaccess`:**
 ```apache
@@ -886,336 +1156,153 @@ php_value memory_limit 256M
 
 ---
 
-## Bảng vị trí log quan trọng trong cPanel 134
+## 14. Thực chiến: Tạo Package → Account → SSL → WordPress
 
-| Log | Vị trí trong cPanel |
-|-----|---------------------|
-| Error log website | **Metrics → Errors** hoặc `~/public_html/error_log` |
-| Access log | **Metrics → Raw Access** |
-| Email gửi/nhận | **Email → Track Delivery** |
-| Trạng thái SSL | **Security → SSL/TLS Status** |
-| Bandwidth/Resource | **Metrics → Resource Usage** |
-| Apache error (SSH) | `/var/log/apache2/error_log` |
-| MySQL error (SSH) | `/var/lib/mysql/error.log` |
-| cPanel logs (SSH) | `/usr/local/cpanel/logs/` |
+> **Kịch bản:** Khách hàng "Công ty ABC" mua gói Hosting Doanh Nghiệp, domain `abc-company.vn`. Server IP `103.159.51.228`.
 
----
+### 14.1 Tạo Package trong WHM
 
-## 12. WHM (2087) – Quản trị cấp Server
+WHM → **Packages** → **Add a Package** → điền theo bảng ở mục 2.1 → **Add**.
 
-> WHM (Web Host Manager) là panel dành cho **root hoặc reseller**, khác hoàn toàn cPanel: cPanel quản lý **1 tài khoản hosting**, còn WHM quản lý **toàn bộ server** (nhiều tài khoản cPanel, dịch vụ hệ thống, firewall, backup server...).
+Package `doanhnghiep_package` sẵn sàng cho mọi khách cùng gói.
 
-**Đăng nhập:** `https://<server-ip>:2087` — chỉ root hoặc reseller được cấp quyền.
+### 14.2 Tạo Account cho khách
 
-### 12.1 Quản lý tài khoản (việc KTV làm nhiều nhất)
-
-**Tạo account cPanel mới:**
 WHM → **Account Functions** → **Create a New Account**
-- Domain, Username, Password
-- Chọn **Package** (gói hosting đã tạo sẵn — dung lượng, băng thông, số email...)
-- Chọn IP (Dedicated hoặc Shared)
 
-**Suspend / Unsuspend** (khi khách chưa thanh toán, hoặc vi phạm ToS):
-WHM → **Account Functions** → **Suspend/Unsuspend an Account**
-> Lý do suspend nên ghi rõ, vì khách sẽ thấy message này khi truy cập site.
+| Trường | Giá trị | Quy tắc |
+|--------|---------|---------|
+| Domain | `abc-company.vn` | |
+| Username | `abccompany` | Không phải `root`, không dấu, viết liền |
+| Password | *(Password Generator — 100/100)* | Copy lưu lại |
+| Email | Email thật của khách | |
+| Package | `doanhnghiep_package` | |
+| Mail Routing | **Automatically Detect Configuration** | |
+| Enable DKIM | ✅ | |
+| Enable SPF | ✅ | |
+| Enable DMARC | ✅ | |
 
-**Terminate (xóa vĩnh viễn) — CỰC KỲ NGUY HIỂM:**
-WHM → **Account Functions** → **Terminate a Multi-User Account**
-> ⚠️ Luôn tạo Full Backup trước khi terminate. Thao tác không thể hoàn tác.
+Nhấn **Create** → kiểm tra log không có dòng đỏ → nhấn **Go to cPanel**.
 
-**Đổi package / limit tài khoản:**
-WHM → **Modify an Account** — đổi dung lượng, băng thông, số addon domain...
-
-### 12.2 Package (gói hosting)
-
-WHM → **Packages** → **Add a Package**
-
-| Trường | Ví dụ |
-|--------|-------|
-| Disk Quota | 5000 MB |
-| Bandwidth | 50000 MB |
-| Max Addon Domains | 5 |
-| Max Email Accounts | Unlimited |
-| Max Databases | 10 |
-| Max FTP Accounts | Unlimited |
-
-### 12.3 Quản lý dịch vụ hệ thống
-
-- **Service Manager**: bật/tắt/restart Apache, MySQL, Exim, DNS (BIND)...
-- **Restart Services** → chọn dịch vụ → **Restart**
-
-### 12.4 DNS Cluster / Zone (cấp server)
-
-WHM → **DNS Functions** → **Edit DNS Zone** — sửa zone của bất kỳ domain nào trên server (khác với cPanel user chỉ sửa zone qua Zone Editor giới hạn).
-
-### 12.5 SSL cấp server
-
-- **Manage AutoSSL** → chọn provider (Let's Encrypt/Sectigo), chạy AutoSSL cho toàn bộ hoặc từng account.
-- **Install an SSL Certificate** → cài cert cho cả server (ví dụ cert cho hostname `server.nhanhoa.vn`).
-
-### 12.6 Bảo mật & Firewall
-
-- **ConfigServer Security & Firewall (CSF)** nếu đã cài.
-- **Security Center** → **Compilers** (khóa gcc để hạn chế user tự biên dịch mã độc), **Manage Shell Access**.
-
-### 12.7 Giám sát tài nguyên server
-
-- WHM → **Server Status** → **Service Status**, **Process Manager**
-- **Show Current Disk Usage**, **Bandwidth**
-- Log server: `/usr/local/cpanel/logs/`
-
-### 12.8 WP Toolkit Deluxe
-
-WHM → **Manage Plugins** → cài **WP Toolkit Deluxe** (nếu cPanel user không thấy WP Toolkit ở mục 1.3).
-
-### 12.9 Backup cấp server (khác Backup Wizard của user)
-
-WHM → **Backup** → **Backup Configuration**
-- Cấu hình backup tự động toàn server (destination: local, FTP, S3, SCP...)
-- **Restore a Full Backup/cpmove File** — đây là chỗ **duy nhất** phục hồi được file `.tar.gz` Full Account Backup (nhắc ở mục 9.3).
-
-### 12.10 Bảng nhanh: Việc nào làm ở WHM, việc nào ở cPanel
-
-| Việc cần làm | Làm ở đâu |
-|--------------|-----------|
-| Tạo account hosting mới cho khách | WHM |
-| Suspend/Terminate account | WHM |
-| Restart Apache/MySQL toàn server | WHM |
-| Cấu hình CSF Firewall | WHM |
-| Restore Full Account Backup (.tar.gz/cpmove) | WHM |
-| Cài WordPress, quản lý 1 website | cPanel |
-| Tạo email, FTP, database của 1 account | cPanel |
-| Cài SSL cho 1 domain cụ thể | cPanel (hoặc WHM nếu cấp server) |
-| Sửa .htaccess, chmod file | cPanel |
-
----
-
-## 13. Webmail độc lập (2096)
-
-Nếu khách không nhớ cách vào webmail qua cPanel, họ có thể vào thẳng:
-```
-https://mail.hieucute.id.vn:2096
-```
-hoặc
-```
-https://103.159.51.228:2096
-```
-Đăng nhập bằng **địa chỉ email đầy đủ** (`info@hieucute.id.vn`) + mật khẩu — không cần qua cPanel trước.
-
----
-
-## 14. Bảng quyết định nhanh: Vào cổng nào?
-
-| Tình huống | Vào cổng nào |
-|------------|-------------|
-| Khách quên mật khẩu email | 2083 (cPanel) để đổi pass, sau đó đăng nhập lại ở 2096 |
-| Cần tạo account hosting mới cho khách | **2087 (WHM)** |
-| Server bị đầy dịch vụ, cần restart Apache/MySQL | **2087 (WHM)** |
-| Khách báo web lỗi 500, cần check code/permission | 2083 (cPanel), hoặc SSH trực tiếp |
-| Cần suspend account do nợ cước | **2087 (WHM)** |
-| Khách chỉ muốn check mail nhanh, không nhớ domain login | 2096 (Webmail) |
-| Restore Full Account Backup (.tar.gz tổng hợp) | **2087 (WHM)** |
-| Cài WordPress, tạo email/FTP/DB cho 1 site | 2083 (cPanel) |
-
----
-
-## 15. Học cPanel/WHM bằng tư duy DirectAdmin (Mapping kiến thức)
-
-> Bạn đã thuộc lòng hierarchy DirectAdmin (Admin → Reseller → User) và cách Nhân Hòa bypass tầng Reseller. cPanel/WHM có cùng triết lý phân quyền nhưng khác tên gọi và khác cách tổ chức UI. Học phần này bằng cách **map thẳng khái niệm cũ sang khái niệm mới**, đừng học lại từ số 0.
-
-### 15.1 Bảng ánh xạ Hierarchy (quan trọng nhất)
-
-| DirectAdmin | cPanel/WHM tương đương | Ghi chú khác biệt |
-|-------------|------------------------|--------------------|
-| **Admin** (toàn quyền server) | **root trong WHM** | Cả 2 đều toàn quyền hệ thống |
-| **Reseller** (quản lý nhiều User, có Package riêng) | **Reseller account trong WHM** | WHM: Reseller đăng nhập chung giao diện WHM (giới hạn quyền), DirectAdmin: Reseller có UI riêng biệt hẳn với Admin |
-| **User** (chủ 1 website/hosting) | **cPanel account (User)** | Tương đương 1-1, đăng nhập ở cổng riêng (2083 cPanel ↔ port User DirectAdmin) |
-| **User Package** (gói giới hạn dung lượng/băng thông) | **Package** (WHM → Packages) | Tương đương 1-1 gần như hoàn toàn |
-| Giao diện Admin (port riêng, thường 2222) | **WHM (port 2087)** | Cùng vai trò: quản trị server tổng |
-| Giao diện User (port 2222, cùng port với Admin nhưng khác quyền) | **cPanel (port 2083)** | DirectAdmin dùng chung 1 port 2222 cho cả 3 vai trò (phân biệt bằng quyền đăng nhập); cPanel/WHM **tách hẳn port**: 2087 (WHM) và 2083 (cPanel) |
-
-> 🔑 **Điểm khác biệt lớn nhất bạn cần nhớ:** DirectAdmin dùng **1 cổng duy nhất (2222)** cho cả Admin/Reseller/User, phân biệt bằng tài khoản đăng nhập. cPanel/WHM **tách vật lý theo cổng**: quản trị viên luôn vào 2087, khách hàng luôn vào 2083. Đây là lý do tài liệu này phải nói rõ "port nào làm việc gì" ngay từ đầu.
-
-### 15.2 Bảng ánh xạ thao tác thường dùng
-
-| Việc cần làm | DirectAdmin | cPanel/WHM |
-|--------------|-------------|------------|
-| Tạo gói hosting | Admin → **Package Manager** → Add Package | WHM → **Packages** → Add a Package |
-| Tạo tài khoản khách | Admin → **Create User** (gán Package + domain) | WHM → **Create a New Account** (gán Package + domain) |
-| Sửa quyền tài nguyên khách | Admin → **User Manager** → Edit | WHM → **Modify an Account** |
-| Khóa tài khoản khách | Admin → **Suspend/Unsuspend Users** | WHM → **Suspend/Unsuspend an Account** |
-| Xóa tài khoản khách | Admin → **Delete Users** | WHM → **Terminate a Multi-User Account** |
-| Cài SSL cho 1 domain | User → **SSL Certificates** | cPanel → **SSL/TLS Status** (AutoSSL) |
-| Cài WordPress | User → **Extended Features** → Installatron/Softaculous | cPanel → **WordPress Toolkit** hoặc Softaculous |
-| Quản lý DNS Zone khách | User → **DNS Management** | cPanel → **Zone Editor** |
-| Quản lý DNS Zone toàn server | Admin → **Admin Level DNS** | WHM → **DNS Functions → Edit DNS Zone** |
-| Backup toàn tài khoản | User → **Backup/Restore** | cPanel → **Backup Wizard** (Full Account Backup) |
-| Restore file `.tar.gz` tổng hợp | Admin → **Admin Backup/Transfer** | WHM → **Restore a Full Backup/cpmove File** |
-| Cấu hình dịch vụ hệ thống (Apache/MySQL) | Admin → **Service Monitor** | WHM → **Service Manager / Restart Services** |
-| Quản lý Firewall | Admin → CSF (cài thêm) | WHM → CSF (cài thêm, giống hệt) |
-
-### 15.3 Điểm giống nhau gần như tuyệt đối
-
-Vì bạn từng học kỹ CSF, Let's Encrypt, cron, DNS record types (SPF/DKIM/DMARC), Nginx reverse proxy — những kiến thức đó **dùng lại được 100%**, không đổi gì cả giữa DirectAdmin và cPanel/WHM:
-- Cấu trúc DNS record (A, CNAME, MX, TXT) — giống hệt.
-- Nguyên lý Let's Encrypt / AutoSSL — giống hệt, chỉ khác tên nút bấm.
-- CSF Firewall — cài đặt và cấu hình giống hệt trên cả 2 panel.
-- Cron job syntax (`* * * * *`) — giống hệt, chỉ khác giao diện nhập liệu.
-- Nguyên lý chmod 755/644/600 cho WordPress — giống hệt.
-
-### 15.4 Điểm cần "học lại" thật sự (không map được)
-
-| Chủ đề | Vì sao khác |
-|--------|-------------|
-| Cấu trúc file cấu hình Apache | DirectAdmin dùng `/etc/httpd/conf/extra/httpd-vhosts.conf` theo template riêng; cPanel dùng `/etc/apache2/conf.d/userdata/` với hệ thống "userdata" riêng biệt |
-| Package Extensions | DirectAdmin có "Custom Permissions" theo checkbox rất chi tiết; WHM Package đơn giản hơn nhưng có thêm **Feature List** (bật/tắt cả cụm tính năng UI) — khái niệm này DirectAdmin không có |
-| WP Toolkit vs Softaculous/Installatron | Giao diện và luồng thao tác thực sự khác, cần làm quen tay |
-| Tên gọi "Reseller" trong WHM | Reseller trong WHM vẫn dùng chung giao diện WHM (chỉ ẩn bớt menu), không có UI riêng biệt như DirectAdmin Reseller |
-
-### 15.5 Lộ trình học đề xuất (giống cách bạn đã học DirectAdmin)
-
-1. **Tuần 1:** Thuộc bảng ánh xạ ở 15.1–15.2, thực hành tạo Package + tạo Account trên WHM lab (xem mục 16).
-2. **Tuần 2:** So sánh file cấu hình Apache thực tế giữa 2 hệ (đọc `/etc/apache2/conf.d/userdata/` trên cPanel, đối chiếu với vhost template DirectAdmin bạn đã biết).
-3. **Tuần 3:** Thực hành troubleshooting chéo — dùng đúng bộ lỗi 500/403/404 bạn đã học ở DirectAdmin, áp lại vào cPanel (mục 11 ở trên) để thấy nguyên nhân/khắc phục gần như trùng khớp.
-4. **Tuần 4:** Học sâu WHM-only: Backup Configuration cấp server, Restore cpmove file, Service Manager, Security Center.
-
----
-
-## 16. Thực chiến: Tạo Package → Tạo User → SSL → WordPress
-
-> Kịch bản: khách hàng "Công ty ABC" mua gói **Hosting Linux Business**, domain `abc-company.vn`. Server IP ví dụ `103.159.51.228`. Tương đương bài thực hành "tạo User Package + tạo User" bạn từng làm trên DirectAdmin.
-
-### 16.1 Tạo Package trong WHM (làm 1 lần, tái sử dụng cho mọi khách cùng gói)
-
-Đăng nhập `https://103.159.51.228:2087`
-
-**WHM → Packages → Add a Package**
-
-| Trường | Giá trị thực tế (gói Business Nhân Hòa) | Giải thích |
-|--------|------------------------------------------|------------|
-| Package Name | `Business_5GB` | Đặt tên có ý nghĩa, không dấu, không cách |
-| Disk Quota | `5000` MB | Dung lượng ổ đĩa |
-| Bandwidth | `Unlimited` | Băng thông |
-| Max Email Accounts | `Unlimited` | |
-| Max Email Lists | `10` | Mailing list |
-| Max Databases | `10` | Số DB MySQL tối đa |
-| Max FTP Accounts | `Unlimited` | |
-| Max Subdomains | `Unlimited` | |
-| Max Parked Domains (Alias) | `5` | |
-| Max Addon Domains | `5` | |
-| CGI Access | ✅ Tick | |
-| Shell Access | ❌ Bỏ tick | Khách thường không cần SSH |
-| Feature List | `default` | Trừ khi có gói riêng |
-
-**Nhấn "Add"** → Package `Business_5GB` xuất hiện trong danh sách, tương đương "User Package" bạn đã tạo bên DirectAdmin.
-
-> 💡 Thực tế Nhân Hòa: mỗi tier hosting (Bronze/Silver/Gold/Business...) tương ứng 1 Package trong WHM để tạo account nhanh, đồng nhất, không sai sót giữa các khách.
-
-### 16.2 Tạo tài khoản (Account) cho khách — tương đương "Create User" bên DirectAdmin
-
-**WHM → Account Functions → Create a New Account**
-
-| Trường | Giá trị ví dụ | Ghi chú |
-|--------|--------------|---------|
-| Domain | `abc-company.vn` | Domain chính của khách |
-| Username | `abccompany` | WHM tự gợi ý, có thể sửa |
-| Password | *(dùng Password Generator)* | Copy lưu lại — mật khẩu **cPanel** của khách |
-| Email | Email thật của khách | Nhận thông báo hệ thống |
-| Package | Chọn `Business_5GB` | Package vừa tạo ở 16.1 |
-| Nameservers | Giữ mặc định Nhân Hòa (vd `ns1.nhanhoa.com`, `ns2.nhanhoa.com`) | Nếu khách dùng DNS Nhân Hòa quản lý |
-| IP Address | `Shared IP` (trừ khi khách yêu cầu Dedicated IP) | |
-
-**Nhấn "Create"** → WHM tạo:
-- 1 user Linux hệ thống tên `abccompany`
-- 1 home directory `/home/abccompany`
-- Database prefix `abccompany_`
-- cPanel account riêng, đăng nhập độc lập tại `https://abc-company.vn:2083`
-
-Kiểm tra log tạo account cuối trang — không có dòng đỏ (lỗi) là thành công.
-
-### 16.3 Gửi thông tin đăng nhập cho khách
-
-```
-Domain:        abc-company.vn
-cPanel URL:    https://abc-company.vn:2083 (hoặc https://103.159.51.228:2083)
-Username:      abccompany
-Password:      (mật khẩu đã tạo)
-
-Nameserver cần trỏ tại nơi mua domain (nếu domain mua ngoài Nhân Hòa):
-ns1.nhanhoa.com
-ns2.nhanhoa.com
-```
-
-### 16.4 Xác minh DNS trước khi cài SSL (bắt buộc)
+### 14.3 Xác minh DNS trước khi cài SSL (bắt buộc)
 
 ```bash
 dig A abc-company.vn +short
 ```
-Kết quả phải trả về `103.159.51.228`. Nếu chưa lên — **dừng lại**, AutoSSL sẽ luôn fail nếu DNS sai.
+Phải trả về `103.159.51.228`. Nếu chưa — **dừng lại, chờ DNS propagate**.
 
-### 16.5 Cài SSL (đăng nhập cPanel thay khách)
+### 14.4 Cài SSL
 
-Đăng nhập `https://abc-company.vn:2083`.
+Đăng nhập cPanel của account vừa tạo.
 
-**cPanel → Security → SSL/TLS Status**
-1. Tick `abc-company.vn` và `www.abc-company.vn`
-2. Nhấn **Run AutoSSL** → chờ 1–3 phút → trạng thái ✅
+cPanel → **Security** → **SSL/TLS Certificates** → tick domain → **Run AutoSSL** → chờ ✅.
 
-Nếu fail lần đầu (rất hay gặp với domain mới trỏ), làm quy trình gỡ SSL cũ (xem mục 5.3), rồi Run AutoSSL lại.
+Sau đó: cPanel → **Domains** → chọn domain → bật **Force HTTPS Redirect**.
 
-**Bật Force HTTPS Redirect:**
-cPanel → **Domains** → chọn `abc-company.vn` → bật toggle **Force HTTPS Redirect**
+>  Thứ tự: **SSL trước → Force HTTPS sau**.
 
-> ⚠️ Thứ tự bắt buộc: **cài SSL xong rồi mới bật Force HTTPS**. Bật trước khi cert active sẽ khiến site sập (redirect loop).
+### 14.5 Cài WordPress
 
-### 16.6 Cài WordPress cho khách
+cPanel → **WordPress Management** → **Install WordPress** → điền thông tin (username không phải `admin`) → **Install**.
 
-**cPanel → Software → WordPress Toolkit → Install WordPress**
+Kiểm tra `https://abc-company.vn/wp-admin`.
 
-| Trường | Giá trị | Lưu ý |
-|--------|---------|-------|
-| Domain | `abc-company.vn` | |
-| Directory | Để trống | Cài ở root domain |
-| WordPress version | Latest stable | |
-| Admin username | `admin_abc` | **Không dùng `admin`** |
-| Admin password | ≥12 ký tự, tạo mạnh | |
-| Admin email | Email thật của khách | |
+### 14.6 Checklist bàn giao khách
 
-Nhấn **Install** → chờ 1–2 phút → kiểm tra `https://abc-company.vn/wp-admin`.
-
-### 16.7 Checklist bàn giao khách
-
-| Việc | Đã làm? |
-|------|---------|
+| Hạng mục | Trạng thái |
+|----------|-----------|
 | DNS trỏ đúng IP | ☐ |
-| SSL AutoSSL chạy thành công (ổ khóa xanh) | ☐ |
+| SSL AutoSSL thành công (ổ khóa xanh) | ☐ |
 | Force HTTPS Redirect đã bật | ☐ |
+| DKIM / SPF / DMARC đã bật | ☐ |
 | WordPress cài xong, đăng nhập `/wp-admin` được | ☐ |
-| Đổi permalink WP sang "Post name" (SEO-friendly) | ☐ |
-| Xóa theme/plugin mặc định không dùng | ☐ |
-| Kiểm tra Mixed Content (nếu import site cũ) | ☐ |
+| Đổi permalink WP sang "Post name" | ☐ |
+| Xóa theme / plugin mặc định không dùng | ☐ |
+| Kiểm tra Mixed Content | ☐ |
 | Gửi thông tin cPanel + WP admin cho khách | ☐ |
-| Đặt lịch backup tự động | ☐ |
+| Đặt lịch backup tự động (Cron Job) | ☐ |
 
-### 16.8 Backup tự động ngay sau khi bàn giao (nâng cao)
+---
 
-Đặt cron job backup định kỳ ở cấp server (chạy được trên VPS/WHM server, không phải trong cPanel user):
-```bash
-0 2 * * 0 /scripts/pkgacct abccompany
-```
-Hoặc bật **WHM → Backup → Backup Configuration** để hệ thống tự backup toàn server theo lịch, áp dụng cho toàn bộ account bao gồm `abccompany`.
+## 15. Mapping kiến thức DirectAdmin sang cPanel/WHM
+
+### 15.1 Hierarchy (phân cấp quản trị)
+
+| DirectAdmin | cPanel/WHM | Điểm khác biệt |
+|-------------|-----------|----------------|
+| Admin (toàn quyền server) | Root trong **WHM** | Tương đương |
+| Reseller (quản lý nhiều User) | Reseller account trong **WHM** | WHM: Reseller dùng chung giao diện WHM (ẩn bớt menu). DA: Reseller có UI riêng biệt |
+| User (chủ 1 website) | **cPanel** account | Tương đương 1-1 |
+| User Package | **Package** trong WHM | Tương đương 1-1 |
+| Giao diện Admin (port 2222) | **WHM** (port 2087) | DA dùng 1 port cho tất cả; cPanel/WHM **tách port vật lý** |
+| Giao diện User (port 2222) | **cPanel** (port 2083) | |
+
+> 🔑 **Khác biệt quan trọng nhất:** DirectAdmin dùng **1 cổng (2222)** cho cả Admin/Reseller/User. cPanel/WHM **tách hoàn toàn theo cổng**: 2087 cho quản trị, 2083 cho khách hàng, 2096 cho webmail.
+
+### 15.2 Mapping thao tác thường dùng
+
+| Việc cần làm | DirectAdmin | cPanel/WHM |
+|--------------|-------------|------------|
+| Tạo gói hosting | Admin → **Package Manager** | WHM → **Packages → Add a Package** |
+| Tạo tài khoản khách | Admin → **Create User** | WHM → **Create a New Account** |
+| Sửa giới hạn tài nguyên | Admin → **User Manager → Edit** | WHM → **Modify an Account** |
+| Khóa tài khoản | Admin → **Suspend/Unsuspend Users** | WHM → **Suspend/Unsuspend an Account** |
+| Xóa tài khoản | Admin → **Delete Users** | WHM → **Terminate a Multi-User Account** |
+| Cài SSL 1 domain | User → **SSL Certificates** | cPanel → **SSL/TLS Certificates** |
+| Cài WordPress | User → Softaculous/Installatron | cPanel → **WordPress Management** |
+| Quản lý DNS 1 domain | User → **DNS Management** | cPanel → **Zone Editor** |
+| Quản lý DNS toàn server | Admin → **Admin Level DNS** | WHM → **DNS Functions → Edit DNS Zone** |
+| Backup toàn tài khoản | User → **Backup/Restore** | cPanel → **Backup Wizard** |
+| Restore Full Backup | Admin → **Admin Backup/Transfer** | WHM → **Restore a Full Backup/cpmove File** |
+| Restart dịch vụ hệ thống | Admin → **Service Monitor** | WHM → **Restart Services** |
+| Quản lý Firewall | Admin → CSF | WHM → CSF (giống hệt) |
+
+### 15.3 Kiến thức dùng lại được 100%
+
+| Kiến thức | Áp dụng lại |
+|-----------|------------|
+| DNS record types (A, CNAME, MX, TXT) | Giống hệt — chỉ khác giao diện nhập |
+| SPF / DKIM / DMARC nguyên lý | Giống hệt |
+| Let's Encrypt / AutoSSL nguyên lý | Giống hệt |
+| CSF Firewall cấu hình | Giống hệt |
+| Cron job syntax (`* * * * *`) | Giống hệt |
+| chmod 755/644/600 | Giống hệt |
+
+### 15.4 Cần học lại thật sự
+
+| Chủ đề | Lý do |
+|--------|-------|
+| Cấu trúc file Apache VirtualHost | DA dùng `/etc/httpd/conf/extra/httpd-vhosts.conf`; cPanel dùng `/etc/apache2/conf.d/userdata/` với hệ thống "userdata" riêng |
+| Feature List trong WHM | Khái niệm này không có trong DA — cho phép bật/tắt cả cụm tính năng UI cho từng Package |
+| WP Toolkit / WordPress Management | Giao diện và luồng thao tác khác Installatron/Softaculous |
+
+---
+
+## Bảng vị trí log quan trọng
+
+| Log | Vị trí trong cPanel 134 |
+|-----|------------------------|
+| Error log website | **Metrics → Errors** hoặc `~/public_html/error_log` |
+| Access log | **Metrics → Raw Access** |
+| Email gửi/nhận | **Email → Track Delivery** |
+| Trạng thái SSL | **Security → SSL/TLS Certificates** |
+| Tài nguyên server | **Metrics → Bandwidth / Visitors** |
+| Apache error (SSH) | `/var/log/apache2/error_log` |
+| MySQL error (SSH) | `/var/lib/mysql/error.log` |
+| cPanel system log (SSH) | `/usr/local/cpanel/logs/` |
+| WHM AutoSSL log | WHM → **SSL/TLS → Manage AutoSSL → Logs** |
 
 ---
 
 ## References
 
-- [Hướng dẫn cài SSL trên Hosting cPanel – Nhân Hòa](https://wiki.nhanhoa.com/kb/huong-dan-cai-ssl-tren-hosting-cpanel/)
-- [Hướng dẫn cài Next.js trên Hosting cPanel – Nhân Hòa](https://wiki.nhanhoa.com/kb/huong-dan-cai-next-js-tren-hosting-cpanel/)
-- [Cách tạo Database trên Hosting dùng cPanel – Nhân Hòa](https://wiki.nhanhoa.com/kb/cach-tao-database-tren-hosting-dung-cpanel/)
-- [cPanel – Cấu hình giới hạn thành viên gửi vào Mailing List – Nhân Hòa](https://wiki.nhanhoa.com/kb/cpanel-cau-hinh-gioi-han-thanh-vien-gui-vao-mailing-list/)
-- [cPanel – Tính năng Restrict trong trang quản trị Mail – Nhân Hòa](https://wiki.nhanhoa.com/kb/cpanel-tinh-nang-restrict-trong-trang-quan-tri-mail/)
-- [cPanel – Hướng dẫn tải Backup từ ShareHosting – Nhân Hòa](https://wiki.nhanhoa.com/kb/cpanel-huong-dan-tai-backup-tu-sharehosting/)
-- [Hướng dẫn tạo tài khoản FTP trên Hosting cPanel – Nhân Hòa](https://wiki.nhanhoa.com/kb/huong-dan-tao-tai-khoan-ftp-tren-hosting-su-dung-cpanel/)
-- [cPanel – Hướng dẫn tạo Cron Job – Nhân Hòa](https://wiki.nhanhoa.com/kb/cpanel-huong-dan-tao-cronjob-cpanel/)
-- [cPanel Knowledge Base – docs.cpanel.net](https://docs.cpanel.net/knowledge-base/)
-- [WHM Documentation – documentation.cpanel.net](https://documentation.cpanel.net/)
+- [Nhân Hòa – Hướng dẫn cài SSL trên Hosting cPanel](https://wiki.nhanhoa.com/kb/huong-dan-cai-ssl-tren-hosting-cpanel/)
+- [Nhân Hòa – Hướng dẫn cài Next.js trên Hosting cPanel](https://wiki.nhanhoa.com/kb/huong-dan-cai-next-js-tren-hosting-cpanel/)
+- [Nhân Hòa – Cách tạo Database trên Hosting dùng cPanel](https://wiki.nhanhoa.com/kb/cach-tao-database-tren-hosting-dung-cpanel/)
+- [Nhân Hòa – cPanel: Giới hạn thành viên gửi vào Mailing List](https://wiki.nhanhoa.com/kb/cpanel-cau-hinh-gioi-han-thanh-vien-gui-vao-mailing-list/)
+- [Nhân Hòa – cPanel: Tính năng Restrict trong quản trị Mail](https://wiki.nhanhoa.com/kb/cpanel-tinh-nang-restrict-trong-trang-quan-tri-mail/)
+- [Nhân Hòa – Hướng dẫn tải Backup từ ShareHosting](https://wiki.nhanhoa.com/kb/cpanel-huong-dan-tai-backup-tu-sharehosting/)
+- [Nhân Hòa – Hướng dẫn tạo tài khoản FTP trên cPanel](https://wiki.nhanhoa.com/kb/huong-dan-tao-tai-khoan-ftp-tren-hosting-su-dung-cpanel/)
+- [Nhân Hòa – Hướng dẫn tạo Cron Job cPanel](https://wiki.nhanhoa.com/kb/cpanel-huong-dan-tao-cronjob-cpanel/)
+- [cPanel Knowledge Base](https://docs.cpanel.net/knowledge-base/)
+- [WHM Documentation](https://documentation.cpanel.net/)
