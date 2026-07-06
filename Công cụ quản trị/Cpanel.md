@@ -1,6 +1,6 @@
 # Hướng dẫn sử dụng cPanel (2083) & WHM (2087)
 
-> **Hệ điều hành:** Ubuntu v22.04.5 STANDARD kvm
+> **Hệ điều hành:** Ubuntu v22.04.5 
 > **Phiên bản:** cPanel/WHM 134.0.43
 > **Giao diện (Theme):** Jupiter
 > **Domain thực hành:** `hieucute.id.vn`
@@ -862,7 +862,7 @@ BACKUP_DIR="/home/iamhieu/backups/$(date +%Y-%m-%d)"
 mkdir -p "$BACKUP_DIR"
 
 # Backup database
-mysqldump -u iamhieu_wpuser -p'password' iamhieu_wpdb \
+mysqldump -u iamhieu_wpuser -p'.%3JN1g5t$KYLY*W' iamhieu_wpdb \
   | gzip -9 > "$BACKUP_DIR/db_hieucute.sql.gz"
 
 # Backup source code
@@ -892,6 +892,8 @@ Cron chạy hàng ngày lúc 1:00 sáng:
 
 **Đường dẫn:** cPanel → **Files**  → **Backup Wizard**
 
+<img width="688" height="255" alt="image" src="https://github.com/user-attachments/assets/5a7f702e-2245-4622-9584-47fed3f0826a" />
+
 **Bước 1:** Nhấn **Back Up**.
 
 **Bước 2:** Chọn loại backup:
@@ -902,6 +904,8 @@ Cron chạy hàng ngày lúc 1:00 sáng:
 | **Home Directory** | Chỉ file trong `/home/iamhieu/` | Backup code nhanh |
 | **MySQL Databases** | Chỉ database | Trước khi cập nhật WordPress/plugin |
 
+<img width="688" height="219" alt="image" src="https://github.com/user-attachments/assets/50e116a3-4a48-4c8f-9022-0dbfbe45e6f4" />
+
 **Bước 3:** Chọn **Full Account Backup** → chọn đích lưu:
 
 | Đích | Mô tả |
@@ -911,6 +915,8 @@ Cron chạy hàng ngày lúc 1:00 sáng:
 | Secure Copy (SCP) | Gửi qua SSH an toàn |
 
 **Bước 4:** Điền email nhận thông báo hoàn tất → **Generate Backup**.
+
+<img width="475" height="229" alt="image" src="https://github.com/user-attachments/assets/991f98c6-59e3-4f86-9bfa-57d4479125e4" />
 
 **Bước 5:** Tải file `.tar.gz` về máy:
 
@@ -1237,8 +1243,6 @@ Kiểm tra `https://abc-company.vn/wp-admin`.
 | Giao diện Admin (port 2222) | **WHM** (port 2087) | DA dùng 1 port cho tất cả; cPanel/WHM **tách port vật lý** |
 | Giao diện User (port 2222) | **cPanel** (port 2083) | |
 
-> 🔑 **Khác biệt quan trọng nhất:** DirectAdmin dùng **1 cổng (2222)** cho cả Admin/Reseller/User. cPanel/WHM **tách hoàn toàn theo cổng**: 2087 cho quản trị, 2083 cho khách hàng, 2096 cho webmail.
-
 ### 15.2 Mapping thao tác thường dùng
 
 | Việc cần làm | DirectAdmin | cPanel/WHM |
@@ -1294,6 +1298,177 @@ Kiểm tra `https://abc-company.vn/wp-admin`.
 
 ---
 
+## 16. Cấu hình nâng cao qua SSH (cho Admin)
+
+>  Thao tác trực tiếp qua SSH — dùng khi cần soi sâu hơn những gì giao diện WHM/cPanel hiển thị, hoặc khi xử lý sự cố khẩn
+> các lệnh dưới đây cần chạy với quyền `root`
+
+### 16.1 Check log hệ thống chung & Trạng thái Admin
+
+**Kiểm tra lịch sử đăng nhập SSH**
+
+- File log: `/var/log/auth.log` (Ubuntu/Debian) hoặc `/var/log/secure` (CentOS/AlmaLinux)
+
+```bash
+lastlog
+```
+> Hiển thị lần đăng nhập gần nhất của **tất cả user** trên hệ thống — biết ngay tài khoản nào lâu rồi không ai dùng.
+
+```bash
+last -a
+```
+> Liệt kê lịch sử đăng nhập **thành công**, kèm IP nguồn (tham số `-a` đưa IP/hostname ra cuối dòng cho dễ đọc).
+
+```bash
+grep "Failed password" /var/log/auth.log
+```
+> Lọc ra các lượt đăng nhập **thất bại** — dấu hiệu server đang bị dò mật khẩu (brute-force). Nếu thấy 1 IP lặp lại hàng trăm lần, nên đưa vào CSF Deny List.
+
+**Theo dõi log hoạt động sudo/su lên quyền root**
+
+- File log: `/var/log/auth.log` (Ubuntu/Debian) hoặc `/var/log/secure` (CentOS)
+
+```bash
+tail -f /var/log/auth.log | grep -i "sudo\|su:"
+```
+> `tail -f`: theo dõi log real-time (log có dòng mới là hiện ngay). `grep -i "sudo\|su:"`: chỉ lọc dòng liên quan đến lệnh `sudo` hoặc chuyển user bằng `su`, không quan tâm chữ hoa/thường (`-i`). Dùng để biết ai vừa nâng quyền root và chạy lệnh gì.
+
+---
+
+### 16.2 Check log tài khoản (User cụ thể)
+
+**Kiểm tra tiến trình đang chạy của một user cụ thể**
+
+```bash
+ps -u iamhieu -f
+```
+> `-u iamhieu`: chỉ lọc tiến trình thuộc về user `iamhieu`. `-f`: hiển thị đầy đủ (full format) gồm PID, thời gian chạy, câu lệnh gốc. Rất hữu ích khi nghi ngờ user đang chạy script nặng CPU hoặc process lạ (mã độc).
+
+```bash
+top -u iamhieu
+```
+> Giám sát real-time CPU/RAM đang bị tiêu tốn bởi riêng user `iamhieu` — dùng khi cần xem "ngay lúc này" ai đang làm server ì ạch.
+
+**Xem lịch sử gõ lệnh (command history) của từng tài khoản**
+
+```bash
+cat /home/iamhieu/.bash_history
+```
+> Đọc file lịch sử lệnh đã gõ của user `iamhieu` (áp dụng khi user có Shell Access qua SSH). Đường dẫn tương tự cho user khác: `/home/<username>/.bash_history`.
+
+```bash
+history -a && tail -50 /home/iamhieu/.bash_history
+```
+> `history -a` ép ghi ngay các lệnh đang nằm trong bộ nhớ đệm xuống file (tránh trường hợp phiên SSH của user chưa đóng nên history chưa được lưu). `tail -50`: chỉ xem 50 dòng lệnh gần nhất, đỡ rối mắt.
+
+---
+
+### 16.3 Check log Mail (Rất quan trọng để tìm spam/lỗi gửi nhận)
+
+**File log mail chính của cPanel (Exim log)**
+
+- Đường dẫn: `/var/log/exim_mainlog`
+
+**Xem log gửi/nhận mail theo thời gian thực**
+
+```bash
+tail -f /var/log/exim_mainlog
+```
+> Theo dõi trực tiếp mọi email đi/đến trên server ngay khi nó xảy ra — bật lệnh này lên rồi thử gửi 1 email test là thấy log chạy ngay.
+
+**Kiểm tra một tài khoản email cụ thể đang gửi gì / có bị kẹt hàng đợi không**
+
+```bash
+grep "admin@hieucute.id.vn" /var/log/exim_mainlog | tail -50
+```
+> `grep "admin@hieucute.id.vn"`: lọc toàn bộ dòng log có liên quan đến địa chỉ email này (cả gửi lẫn nhận). `tail -50`: giới hạn 50 dòng gần nhất để không bị "ngợp" nếu mailbox hoạt động nhiều.
+
+```bash
+exim -bp | grep "admin@hieucute.id.vn"
+```
+> `exim -bp`: liệt kê toàn bộ mail đang nằm trong **hàng đợi (queue)** — tức là chưa gửi được. Kết hợp `grep` để lọc riêng thư liên quan đến địa chỉ cần kiểm tra. Nếu thấy nhiều thư "kẹt" ở đây, khả năng cao domain nhận đang chặn hoặc DNS/PTR có vấn đề.
+
+```bash
+exiqgrep -f admin@hieucute.id.vn
+```
+> Cách khác gọn hơn: `exiqgrep -f` tìm trong hàng đợi các thư có **người gửi (from)** trùng địa chỉ chỉ định — hữu ích khi nghi ngờ tài khoản mail đang bị chiếm dụng để phát tán spam hàng loạt (số lượng thư trong queue tăng bất thường).
+
+---
+
+### 16.4 Check log Web (Apache/Nginx) của từng tài khoản
+
+**File log chung của Webserver**
+
+- Access log: `/etc/apache2/logs/access_log` hoặc `/var/log/apache2/access_log` (tuỳ bản dựng)
+- Error log: `/etc/apache2/logs/error_log` hoặc `/var/log/apache2/error_log`
+
+**Xem log lỗi Web của đúng một tài khoản/domain cụ thể**
+
+```bash
+tail -f /usr/local/apache/logs/hieucute.id.vn-ssl_log
+```
+> cPanel tách riêng log lỗi/log truy cập cho **từng domain** trong `/usr/local/apache/logs/`, đặt tên theo mẫu `<domain>_log` (hoặc `<domain>-ssl_log` nếu qua HTTPS). Theo dõi real-time đúng domain đang gặp lỗi 500/502 mà không bị lẫn log của domain khác trên cùng server.
+
+```bash
+tail -100 /home/iamhieu/logs/hieucute.id.vn/error.log
+```
+> Với các bản cPanel bật **Log lỗi riêng theo tài khoản**, log nằm ngay trong home directory của user. Xem 100 dòng cuối để bắt lỗi PHP, lỗi permission, hoặc dấu hiệu mã độc (ví dụ file `.php` lạ bị gọi liên tục).
+
+```bash
+grep -i "500\|502\|503" /usr/local/apache/logs/hieucute.id.vn-ssl_log | tail -50
+```
+> Lọc nhanh các dòng có mã lỗi `500/502/503` trong access log của domain — cách nhanh nhất để xác định lỗi đang xảy ra ở request nào, vào thời điểm nào.
+
+> 💡 Nếu server dùng thêm **Nginx** (reverse proxy phía trước Apache — cấu hình phổ biến trên cPanel bản mới để tăng tốc), log Nginx nằm ở `/var/log/nginx/access.log` và `/var/log/nginx/error.log`, xem tương tự bằng `tail -f`.
+
+---
+
+### 16.5 Check log của chính cPanel & WHM
+
+**File log đăng nhập cPanel/WHM (ai vừa access, từ IP nào)**
+
+- Đường dẫn: `/usr/local/cpanel/logs/access_log` hoặc `/usr/local/cpanel/logs/login_log`
+
+```bash
+tail -f /usr/local/cpanel/logs/login_log
+```
+> Theo dõi real-time các lượt đăng nhập vào cPanel/WHM — mỗi dòng thường có thời gian, username, IP nguồn. Dùng để xác minh "vừa nãy ai login vào tài khoản khách" hoặc phát hiện IP lạ đăng nhập ngoài giờ hành chính.
+
+```bash
+grep "iamhieu" /usr/local/cpanel/logs/access_log | tail -30
+```
+> Lọc riêng lịch sử truy cập của một username cụ thể (ví dụ `iamhieu`) trong log access chung, xem 30 dòng gần nhất.
+
+**File log lỗi hệ thống của riêng cPanel (cPanel error_log)**
+
+- Đường dẫn: `/usr/local/cpanel/logs/error_log`
+
+```bash
+tail -f /usr/local/cpanel/logs/error_log
+```
+> Theo dõi lỗi phát sinh từ chính hệ thống cPanel/WHM (không phải lỗi website) — ví dụ lỗi khi tạo account, lỗi cronjob nội bộ của cPanel, lỗi license, lỗi module bị crash. Bật lệnh này song song khi thao tác một tác vụ WHM nghi ngờ bị treo là cách debug nhanh nhất.
+
+---
+
+## Bảng vị trí log quan trọng
+
+| Log | Vị trí trong cPanel 134 |
+|-----|------------------------|
+| Error log website | **Metrics → Errors** hoặc `~/public_html/error_log` |
+| Access log | **Metrics → Raw Access** |
+| Email gửi/nhận | **Email → Track Delivery** |
+| Trạng thái SSL | **Security → SSL/TLS Certificates** |
+| Tài nguyên server | **Metrics → Bandwidth / Visitors** |
+| Apache error (SSH) | `/var/log/apache2/error_log` |
+| MySQL error (SSH) | `/var/lib/mysql/error.log` |
+| cPanel system log (SSH) | `/usr/local/cpanel/logs/` |
+| WHM AutoSSL log | WHM → **SSL/TLS → Manage AutoSSL → Logs** |
+| Đăng nhập SSH (SSH) | `/var/log/auth.log` (Ubuntu) / `/var/log/secure` (CentOS) |
+| Exim mail log (SSH) | `/var/log/exim_mainlog` |
+| cPanel login log (SSH) | `/usr/local/cpanel/logs/login_log` |
+| cPanel error log riêng (SSH) | `/usr/local/cpanel/logs/error_log` |
+
+---
 ## References
 
 - [Nhân Hòa – Hướng dẫn cài SSL trên Hosting cPanel](https://wiki.nhanhoa.com/kb/huong-dan-cai-ssl-tren-hosting-cpanel/)
