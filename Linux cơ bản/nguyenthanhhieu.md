@@ -9,6 +9,7 @@
 
 Test 
 <img width="416" height="187" alt="image" src="https://github.com/user-attachments/assets/221c6ee9-63f2-403e-be59-91c72901a36c" />
+<img width="335" height="68" alt="image" src="https://github.com/user-attachments/assets/425b7c52-4aa3-4a2a-aa66-f72a4d4cb508" />
 
 
 ## Bài 2
@@ -45,6 +46,7 @@ Test
 
 ### Test
 <img width="308" height="82" alt="image" src="https://github.com/user-attachments/assets/d5d61a85-6461-4a33-8c93-d8a7bea15efc" />
+<img width="955" height="471" alt="image" src="https://github.com/user-attachments/assets/f7f5642e-7635-4f41-b1b4-d7e65d0399b5" />
 
 
 ## Bài 4
