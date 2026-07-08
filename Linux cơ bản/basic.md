@@ -188,6 +188,7 @@ hostnamectl           # Hostname và hệ điều hành
 df -h                 # Dung lượng ổ đĩa
 free -h               # Dung lượng RAM
 ```
+<img width="1194" height="536" alt="image" src="https://github.com/user-attachments/assets/0a1b22b7-081f-4458-9e11-475260ea1c6a" />
 
 ### 4.4 APT – Trình quản lý gói
 
@@ -204,7 +205,9 @@ free -h               # Dung lượng RAM
 | `apt show <gói>` | Xem thông tin chi tiết của gói |
 | `dpkg -l` | Liệt kê tất cả gói đã cài |
 
-> **Lưu ý:** Luôn chạy `sudo apt update` trước `sudo apt install` để đảm bảo danh sách gói mới nhất.
+<img width="1197" height="652" alt="image" src="https://github.com/user-attachments/assets/198c5cf4-9b4a-4453-8f74-c3acff04d61d" />
+
+> Luôn chạy `sudo apt update` trước `sudo apt install` để đảm bảo danh sách gói mới nhất.
 
 ---
 
