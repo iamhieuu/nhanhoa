@@ -163,7 +163,7 @@ sudo -u <username> <command>
 groupname:password:GID:member1,member2,...
 ```
 
-<img width="199" height="87" alt="image" src="https://github.com/user-attachments/assets/04db9301-7f1b-4aab-95e1-97d6fbbfc890" />
+<img width="1172" height="120" alt="image" src="https://github.com/user-attachments/assets/68d84cd7-bae5-48e6-9316-51c9987e02af" />
 
 
 ### 2.3 Tạo group
@@ -228,6 +228,7 @@ id hieu
 who
 w
 ```
+<img width="1191" height="50" alt="image" src="https://github.com/user-attachments/assets/c3ebedf4-e1fb-404e-bdbd-10ccd24d32f6" />
 
 ---
 
@@ -259,23 +260,6 @@ chown [options] <owner>[:<group>] <file/dir>
 | `-H` | Với `-R`: theo symlink ở command line, xử lý nội dung bên trong |
 | `-L` | Với `-R`: theo tất cả symlink trong quá trình duyệt |
 | `-P` | Với `-R`: không theo symlink, chỉ đổi quyền sở hữu của symlink |
-
-**Ví dụ thực tế:**
-
-```bash
-# Đổi owner file
-sudo chown hieu report.txt
-
-# Đổi cả owner lẫn group
-sudo chown hieu:developers /var/www/html
-
-# Áp dụng đệ quy
-sudo chown -R www-data:www-data /var/www/
-
-# Sao chép owner từ file này sang file khác
-sudo chown --reference=source.txt target.txt
-```
-
 
 ---
 
@@ -316,6 +300,8 @@ stat file.txt
 ls -la
 ```
 
+<img width="740" height="216" alt="image" src="https://github.com/user-attachments/assets/6f1d2c08-7090-484a-91a7-76ec2262125e" />
+
 
 ### 4.4 Lệnh chmod – Thay đổi quyền
 
@@ -334,17 +320,7 @@ Kết hợp các giá trị: `r=4`, `w=2`, `x=1`
 | 6 | Read + Write | `rw-` |
 | 7 | Đầy đủ | `rwx` |
 
-```bash
-# Owner: rwx(7), Group: r-x(5), Others: r--(4)
-chmod 754 file.sh
 
-# Quyền phổ biến với file web
-chmod 644 index.html      # rw-r--r--
-chmod 755 /var/www/html   # rwxr-xr-x
-
-# Áp dụng đệ quy
-chmod -R 755 /var/www/
-```
 
 #### Chế độ ký hiệu 
 
@@ -426,7 +402,7 @@ echo "umask 027" >> ~/.bashrc
 
 ---
 
-## Bảng tóm tắt lệnh
+## Tóm tắt lệnh
 
 | Lệnh | Mô tả |
 |------|-------|
