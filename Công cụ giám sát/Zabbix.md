@@ -1,7 +1,56 @@
-# Công cụ giám sát zabbix
+# Công cụ giám sát Zabbix trên Ubuntu 22.04
 
+***
+## Mục lục
 
-Sơ đồ mô hình Lab:
+- [ Công cụ giám sát Zabbix trên Ubuntu 22.04](#công-cụ-giám-sát-zabbix-trên-ubuntu-2204)
+  - [Tổng quan](#tổng-quan)
+    - [Zabbix là gì](#zabbix-là-gì)
+    - [Mô hình Lab](#mô-hình-lab)
+  - [Phần A — Cài đặt Zabbix Server (VM1)](#phần-a--cài-đặt-zabbix-server-vm1)
+    - [1. Thiết lập hostname và IP tĩnh](#1-thiết-lập-hostname-và-ip-tĩnh)
+    - [2. Cập nhật hệ thống](#2-cập-nhật-hệ-thống)
+    - [3. Cài đặt MariaDB 10.11](#3-cài-đặt-mariadb-1011)
+    - [4. Tạo database Zabbix](#4-tạo-database-zabbix)
+    - [5. Cài Zabbix 7.0 repository](#5-cài-zabbix-70-repository)
+    - [6. Cài đặt Zabbix Server, Frontend và Agent](#6-cài-đặt-zabbix-server-frontend-và-agent)
+    - [7. Import schema database](#7-import-schema-database)
+    - [8. Cấu hình Zabbix Server](#8-cấu-hình-zabbix-server)
+    - [9. Cấu hình Nginx cho Zabbix Frontend](#9-cấu-hình-nginx-cho-zabbix-frontend)
+    - [10. Cấu hình PHP-FPM timezone](#10-cấu-hình-php-fpm-timezone)
+    - [11. Cấu hình Zabbix Agent 2 trên VM1](#11-cấu-hình-zabbix-agent-2-trên-vm1)
+    - [12. Khởi động tất cả dịch vụ](#12-khởi-động-tất-cả-dịch-vụ)
+    - [13. Mở firewall](#13-mở-firewall)
+    - [14. Kiểm tra Zabbix Server đang chạy](#14-kiểm-tra-zabbix-server-đang-chạy)
+    - [15. Cài đặt qua Web Setup Wizard](#15-cài-đặt-qua-web-setup-wizard)
+  - [Phần B — Cài đặt Zabbix Agent (VM2)](#phần-b--cài-đặt-zabbix-agent-vm2)
+    - [1. Kiểm tra mạng và hostname](#1-kiểm-tra-mạng-và-hostname)
+    - [2. Cập nhật hệ thống](#2-cập-nhật-hệ-thống-1)
+    - [3. Cài đặt Zabbix Agent 2](#3-cài-đặt-zabbix-agent-2)
+    - [4. Cấu hình Zabbix Agent 2](#4-cấu-hình-zabbix-agent-2)
+    - [5. Khởi động Agent](#5-khởi-động-agent)
+    - [6. Cấu hình Firewall](#6-cấu-hình-firewall)
+    - [7. Kiểm tra Agent từ Zabbix Server (VM1)](#7-kiểm-tra-agent-từ-zabbix-server-vm1)
+  - [Phần C — Thêm VM2 vào Zabbix Frontend](#phần-c--thêm-vm2-vào-zabbix-frontend)
+    - [1. Thêm Host](#1-thêm-host)
+    - [2. Kiểm tra Host đã kết nối](#2-kiểm-tra-host-đã-kết-nối)
+    - [3. Kiểm tra dữ liệu thu thập](#3-kiểm-tra-dữ-liệu-thu-thập)
+
+---
+
+## Tổng quan
+
+### Zabbix là gì
+
+Ghi chú nhanh: Zabbix là công cụ giám sát hạ tầng (server, network, service) — cài Agent lên máy cần theo dõi, Agent gửi số liệu (CPU, RAM, disk, uptime...) về Server, Server lưu vào database rồi hiển thị lên Frontend web. Mô hình gồm 3 thành phần chính hay dùng trong lab:
+
+- **Zabbix Server**: tiến trình xử lý chính, poll/nhận dữ liệu từ Agent, so sánh với trigger để cảnh báo.
+- **Zabbix Agent2**: cài trên máy cần giám sát, thu thập metric hệ thống rồi đẩy về Server.
+- **Database (MariaDB)**: nơi lưu toàn bộ cấu hình, lịch sử dữ liệu giám sát.
+- **Frontend (Nginx + PHP-FPM)**: giao diện web để cấu hình Host, Template, xem biểu đồ.
+
+### Mô hình Lab
+
 ```
 ┌─────────────────────────────────────────────────┐
 │  VMware / VirtualBox Lab Environment            │
@@ -16,10 +65,17 @@ Sơ đồ mô hình Lab:
 └─────────────────────────────────────────────────┘
 ```
 
-#### 1. Thiết lập hostname và IP tĩnh
+Note: VM1 (192.168.136.131) đóng vai trò Zabbix Server (kèm luôn MariaDB + Frontend), VM2 (192.168.136.146) là máy được giám sát (chỉ cài Agent2).
+
+---
+
+## Phần A — Cài đặt Zabbix Server (VM1)
+
+### 1. Thiết lập hostname và IP tĩnh
+
 Tất cả lệnh dưới đây thực hiện trên VM1 — 192.168.136.131
 
-```
+```bash
 # Đặt hostname
 hostnamectl set-hostname zabbix-server
 
@@ -29,13 +85,18 @@ hostname
 ```
 
 Cấu hình IP tĩnh qua Netplan:
-```
+
+```bash
 # Xem tên interface mạng thực tế
 ip link show
 
 # Mở file cấu hình netplan
 nano /etc/netplan/00-installer-config.yaml
+```
+
 Nội dung file:
+
+```yaml
 network:
   version: 2
   ethernets:
@@ -47,6 +108,9 @@ network:
         addresses:
           - 8.8.8.8
           - 8.8.4.4
+```
+
+```bash
 # Apply cấu hình
 sudo netplan apply
 
@@ -56,26 +120,31 @@ ip addr show ens33
 
 # Kiểm tra kết nối ra ngoài
 ping -c 3 8.8.8.8
-
 ```
+
 <img width="647" height="212" alt="image" src="https://github.com/user-attachments/assets/c3267e44-ac9a-4ffe-8d53-884f6355c61c" />
 
+Ghi chú: đặt IP tĩnh trước tiên để các bước sau (DB, firewall rule, Agent trỏ về Server) không bị đổi địa chỉ giữa chừng.
+
 ### 2. Cập nhật hệ thống
-```
+
+```bash
 sudo apt update && apt upgrade -y
 
 # Cài các tool cần thiết
 sudo apt install -y curl wget gnupg2 software-properties-common \
   sudo apt-transport-https ca-certificates lsb-release
+
 # Kiểm tra phiên bản OS
 lsb_release -a
 # Output: Ubuntu 22.04.x LTS
 ```
+
 <img width="318" height="95" alt="image" src="https://github.com/user-attachments/assets/ed0c8660-d308-4880-9c9e-ca9dd7534c2f" />
 
-
 ### 3. Cài đặt MariaDB 10.11
-```
+
+```bash
 # Thêm MariaDB repository chính thức (10.11 LTS)
 curl -LsS https://downloads.mariadb.com/MariaDB/mariadb_repo_setup | sudo bash -s -- --mariadb-server-version="mariadb-10.11"
 
@@ -89,20 +158,27 @@ sudo systemctl enable mariadb
 # Kiểm tra trạng thái
 sudo systemctl status mariadb
 ```
+
 <img width="925" height="331" alt="image" src="https://github.com/user-attachments/assets/9362370b-d103-4d96-8664-31efb1dcbae2" />
 
-
-```
+```bash
 # Kiểm tra phiên bản
 sudo mysql --version
 ```
+
 <img width="623" height="45" alt="image" src="https://github.com/user-attachments/assets/1dc48a67-fddb-4db1-80d4-65dde9055d36" />
 
-### Bảo mật MariaDB:
+Ghi chú: chọn bản 10.11 LTS vì đây là bản MariaDB được Zabbix 7.0 khuyến nghị và support lâu dài, tránh vọc bản mới quá dễ lỗi tương thích schema.
+
+**Bảo mật MariaDB:**
+
+```bash
+sudo mysql_secure_installation
 ```
 
-sudo mysql_secure_installation
 Trả lời theo thứ tự:
+
+```
 Enter current password for root (enter for none):    [nhấn Enter — chưa có mật khẩu]
 Switch to unix_socket authentication [Y/n]:           n
 Change the root password? [Y/n]:                      Y
@@ -114,12 +190,17 @@ Remove test database and access to it? [Y/n]:         Y
 Reload privilege tables now? [Y/n]:                   Y
 ```
 
-## 4. Tạo database Zabbix
-```
+### 4. Tạo database Zabbix
+
+```bash
 # Đăng nhập MariaDB với mật khẩu root vừa đặt
 sudo mysql -u root -p
 # Nhập: 123456a@
+```
+
 Chạy các lệnh SQL sau trong MariaDB prompt:
+
+```sql
 CREATE DATABASE zabbix CHARACTER SET utf8mb4 COLLATE utf8mb4_bin;
 
 CREATE USER 'zabbix'@'localhost' IDENTIFIED BY 'Zabbix@DB2026!';
@@ -131,13 +212,21 @@ SET GLOBAL log_bin_trust_function_creators = 1;
 FLUSH PRIVILEGES;
 
 EXIT;
+```
+
 Kiểm tra database và user đã tạo:
+
+```bash
 mysql -u zabbix -p'Zabbix@DB2026!' -e "SHOW DATABASES;"
 ```
+
 <img width="485" height="100" alt="image" src="https://github.com/user-attachments/assets/f58a24ae-df14-4c58-aea9-732689e3a587" />
 
-## 5. Cài Zabbix 7.0 repository
-```
+Ghi chú: `utf8mb4_bin` là collation Zabbix yêu cầu bắt buộc (phân biệt hoa/thường), chọn sai collation lúc import schema sẽ lỗi ngay. `log_bin_trust_function_creators = 1` chỉ cần bật tạm trong lúc import schema, xong thì tắt lại (xem bước 7).
+
+### 5. Cài Zabbix 7.0 repository
+
+```bash
 # Tải Zabbix 7.0 LTS repository cho Ubuntu 22.04
 wget https://repo.zabbix.com/zabbix/7.0/ubuntu/pool/main/z/zabbix-release/zabbix-release_7.0-2+ubuntu22.04_all.deb
 
@@ -150,10 +239,12 @@ sudo apt update
 # Xác nhận version Zabbix available
 sudo apt-cache policy zabbix-server-mysql | grep Candidate
 ```
+
 <img width="518" height="46" alt="image" src="https://github.com/user-attachments/assets/9fe5c013-3149-40ab-a9c1-868decf08651" />
 
-## 6. Cài đặt Zabbix Server, Frontend và Agent
-```
+### 6. Cài đặt Zabbix Server, Frontend và Agent
+
+```bash
 sudo apt install -y \
   zabbix-server-mysql \
   zabbix-frontend-php \
@@ -164,10 +255,14 @@ sudo apt install -y \
 # Xác nhận tất cả packages đã cài
 sudo dpkg -l | grep zabbix | awk '{print $2, $3}'
 ```
+
 <img width="466" height="100" alt="image" src="https://github.com/user-attachments/assets/50688036-93b4-41f4-b27d-640b21490ab0" />
 
-## 7. Import schema database
-```
+Ghi chú: cài `zabbix-agent2` ngay trên VM1 luôn vì mình muốn Server tự giám sát chính nó (CPU/RAM của Server cũng cần theo dõi).
+
+### 7. Import schema database
+
+```bash
 # Import schema — bước này mất 3-5 phút, không được Ctrl+C
 sudo zcat /usr/share/zabbix-sql-scripts/mysql/server.sql.gz \
   | mysql --default-character-set=utf8mb4 \
@@ -185,16 +280,22 @@ sudo mysql -u zabbix -p'Zabbix@DB2026!' zabbix \
       FROM information_schema.tables
       WHERE table_schema = 'zabbix';"
 ```
+
 <img width="461" height="124" alt="image" src="https://github.com/user-attachments/assets/976f1db7-fcf7-4378-899d-03eb24466463" />
 
-## 8. Cấu hình Zabbix Server
-```
+### 8. Cấu hình Zabbix Server
+
+```bash
 # Backup file cấu hình gốc trước khi chỉnh
 sudo cp /etc/zabbix/zabbix_server.conf /etc/zabbix/zabbix_server.conf.bak
 
 # Chỉnh sửa cấu hình
 sudo nano /etc/zabbix/zabbix_server.conf
-Tìm và sửa các dòng sau (dùng Ctrl+W để tìm trong nano):
+```
+
+Tìm và sửa các dòng sau (dùng `Ctrl+W` để tìm trong nano):
+
+```ini
 # Tìm dòng: # DBPassword=
 # Sửa thành:
 DBPassword=Zabbix@DB2026!
@@ -202,61 +303,77 @@ DBPassword=Zabbix@DB2026!
 # Tìm dòng: # DBSocket=
 # Sửa thành (dùng Unix socket thay TCP/IP — nhanh hơn):
 DBSocket=/var/run/mysqld/mysqld.sock
+```
 
-# Tùy chọn: đặt múi giờ Việt Nam
-# Tìm dòng: # LogSlowQueries=
-# Thêm dòng mới phía dưới:
-# (không cần sửa gì thêm ở bước này)
-Lưu file: Ctrl+X → Y → Enter.
-```
-## 9. Cấu hình Nginx cho Zabbix Frontend
-```
+Lưu file: `Ctrl+X` → `Y` → `Enter`.
+
+### 9. Cấu hình Nginx cho Zabbix Frontend
+
+```bash
 sudo nano /etc/zabbix/nginx.conf
-Tìm 2 dòng bị comment và bỏ dấu #:
+```
+
+Tìm 2 dòng bị comment và bỏ dấu `#`:
+
+```nginx
 #        listen          8080;
 #        server_name     example.com;
+```
 
-# Sửa thành:
+Sửa thành:
+
+```nginx
         listen          80;
         server_name     192.168.136.131;
 ```
+
 Lưu file. Sau đó tắt site mặc định của Nginx:
-```
+
+```bash
 # Xóa default site để tránh conflict
 sudo rm -f /etc/nginx/sites-enabled/default
 
 # Kiểm tra cấu hình Nginx hợp lệ không
 sudo nginx -t
 ```
+
 <img width="433" height="80" alt="image" src="https://github.com/user-attachments/assets/65de4fac-2bc0-4685-a879-22be935fd837" />
 
-## 10. Cấu hình PHP-FPM timezone
-```
+### 10. Cấu hình PHP-FPM timezone
+
+```bash
 sudo nano /etc/zabbix/php-fpm.conf
+```
+
 Tìm dòng timezone và sửa:
+
+```ini
 ; php_value[date.timezone] = Europe/Riga
 # Sửa thành (bỏ dấu ; và đổi timezone):
 php_value[date.timezone] = Asia/Ho_Chi_Minh
 ```
-## 11. Cấu hình Zabbix Agent 2 trên VM1
-Agent này để Zabbix Server tự giám sát chính mình:  
+
+### 11. Cấu hình Zabbix Agent 2 trên VM1
+
+Agent này để Zabbix Server tự giám sát chính mình:
+
+```bash
+sudo nano /etc/zabbix/zabbix_agent2.conf
 ```
-sudo nano /etc/zabbix/zabbix_agent2.conf  
+
 Tìm và sửa:
-Tìm: Server=127.0.0.1
-# Sửa thành:
+
+```ini
 Server=127.0.0.1
 
-# Tìm: ServerActive=127.0.0.1
-# Sửa thành:
 ServerActive=127.0.0.1
 
-# Tìm: Hostname=Zabbix server
-# Sửa thành:
 Hostname=zabbix-server
 ```
-## 12 Khởi động tất cả dịch vụ
-```
+
+### 12. Khởi động tất cả dịch vụ
+
+```bash
 # Khởi động theo đúng thứ tự
 sudo systemctl restart zabbix-server
 sudo systemctl restart zabbix-agent2
@@ -269,8 +386,10 @@ sudo systemctl enable zabbix-agent2
 sudo systemctl enable nginx
 sudo systemctl enable php8.1-fpm
 ```
-## 13. Mở firewall
-```
+
+### 13. Mở firewall
+
+```bash
 # Kiểm tra UFW đang bật không
 sudo ufw status
 
@@ -280,62 +399,80 @@ sudo ufw allow 443/tcp   comment 'Zabbix Frontend HTTPS'
 sudo ufw allow 10051/tcp comment 'Zabbix Server trapper'
 sudo ufw allow 10050/tcp comment 'Zabbix Agent'
 sudo ufw allow 22/tcp    comment 'SSH'
+
 # Xem lại rules đã thêm
 sudo ufw status verbose
 sudo ufw reload
 ```
 
-## 14 Kiểm tra Zabbix Server đang chạy
-```
+### 14. Kiểm tra Zabbix Server đang chạy
+
+```bash
 # Xem log Zabbix Server — 3 dòng quan trọng phải thấy
 tail -50 /var/log/zabbix/zabbix_server.log | grep -E "started|database|error|warning"
+```
+
 Output mong đợi (bình thường):
+
+```
 ... zabbix_server #0 started [main process]
 ... connection to database 'zabbix' established
 ... zabbix_server #1 started [configuration syncer #1]
 ... zabbix_server #2 started [db watchdog #1]
 ```
+
 Nếu thấy lỗi:
-```
+
+```bash
 # Xem toàn bộ log lỗi
 tail -100 /var/log/zabbix/zabbix_server.log | grep -i "error\|cannot\|failed"
 ```
+
 Kiểm tra process đang chạy:
-```
+
+```bash
 # Tất cả 4 service phải Active (running)
 sudo systemctl is-active zabbix-server zabbix-agent2 nginx php8.1-fpm
 
 # Kiểm tra port đang lắng nghe
 ss -tlnp | grep -E '80|10050|10051'
+```
+
 Output mong đợi:
+
+```
 LISTEN  0  128  0.0.0.0:80      0.0.0.0:*  users:(("nginx"))
 LISTEN  0  128  0.0.0.0:10050   0.0.0.0:*  users:(("zabbix_agent2"))
 LISTEN  0  128  0.0.0.0:10051   0.0.0.0:*  users:(("zabbix_server"))
 ```
-_____________
 
-## Mở trình duyệt trên máy host hoặc VM2, truy cập:
-http://192.168.136.131  
+### 15. Cài đặt qua Web Setup Wizard
+
+Mở trình duyệt trên máy host hoặc VM2, truy cập: `http://192.168.136.131`
+
 <img width="740" height="392" alt="image" src="https://github.com/user-attachments/assets/8a79c649-8f21-4138-b202-c5527051029c" />
 
-### Bước 1 — Check prerequisites
+**Bước 1 — Check prerequisites**
 
-Trang đầu tiên kiểm tra môi trường PHP. Tất cả dòng phải hiển thị "OK" màu xanh. Nếu có dòng "Fail":  
-```
+Trang đầu tiên kiểm tra môi trường PHP. Tất cả dòng phải hiển thị "OK" màu xanh. Nếu có dòng "Fail":
+
+```bash
 # Kiểm tra lại PHP extensions
 php -m | grep -E "bcmath|mbstring|gd|xml|ldap|json"
+
 # Nếu thiếu extension nào, cài thêm:
 apt install -y php8.1-bcmath php8.1-mbstring php8.1-gd \
   php8.1-xml php8.1-ldap php8.1-xmlrpc
+
 # Khởi động lại PHP-FPM
 systemctl restart php8.1-fpm
 ```
+
 <img width="481" height="276" alt="image" src="https://github.com/user-attachments/assets/7d5dac5d-650f-4ac6-a688-2c5c55fd332a" />
 
+**Bước 2 — Configure DB connection**
 
-### Bước 2 — Configure DB connection
-
-<img width="466" height="277" alt="image" src="https://github.com/user-attachments/assets/f381fbd3-d8a8-4890-b149-055e39838e63" />  
+<img width="466" height="277" alt="image" src="https://github.com/user-attachments/assets/f381fbd3-d8a8-4890-b149-055e39838e63" />
 
 ```
 Database type:    MySQL
@@ -347,59 +484,70 @@ User:             zabbix
 Password:         Zabbix@DB2026!
 Database TLS encryption: [bỏ trống]
 ```
-Nhấn "Next step" — nếu thấy thông báo màu đỏ "Cannot connect to the database", xem phần Troubleshooting bên dưới.  
+
+Nhấn "Next step" — nếu thấy thông báo màu đỏ "Cannot connect to the database", xem lại DBPassword ở bước 8 và đảm bảo MariaDB đang chạy (`systemctl status mariadb`).
+
+**Bước 3 — Settings**
 
 ```
-### Bước 3 — Settings
 Zabbix server name:  My Zabbix Lab
 Default time zone:   Asia/Ho_Chi_Minh
 Default theme:       Blue
 ```
+
 <img width="494" height="305" alt="image" src="https://github.com/user-attachments/assets/3d8baf83-7b7b-4a6c-ae82-5a0dac9d0d2e" />
 
-```
-### Bước 4 — Pre-installation summary
+**Bước 4 — Pre-installation summary**
+
 Xem lại thông tin và nhấn "Next step".
-### Bước 5 — Finish
+
+**Bước 5 — Finish**
+
 Nhấn "Finish". Trang đăng nhập hiện ra.
-Đăng nhập lần đầu
+
+Đăng nhập lần đầu:
+
+```
 Username: Admin
 Password: zabbix
 ```
+
 <img width="476" height="283" alt="image" src="https://github.com/user-attachments/assets/a69e8f56-93ee-4d02-9b18-7739862ff499" />
 <img width="958" height="448" alt="image" src="https://github.com/user-attachments/assets/ba3feec2-e275-426d-82dd-f91d9a340e57" />
 
-sau đó **đổi mật khẩu Admin ngay lập tức**  
+Sau đó **đổi mật khẩu Admin ngay lập tức**:
+
 <img width="959" height="476" alt="image" src="https://github.com/user-attachments/assets/b9e14c28-0876-43c9-8325-cb9190c746f6" />
-
-----
-
-## Cấu hình VM2 (Zabbix Agent)
-
-#### 1 Kiểm tra mạng và hostname
-```
-# Đặt hostname
-sudo hostnamectl set-hostname zabbix-agent01
-# Kiểm tra hostname
-hostnamectl
-# Kiểm tra IP được cấp từ DHCP
-ip addr
-# Test kết nối đến Zabbix Server (VM1)
-ping -c 3 192.168.136.131
-```
-<img width="681" height="214" alt="image" src="https://github.com/user-attachments/assets/de8fa604-2d1e-424f-82d1-c16c8ab63d21" />
 
 ---
 
-#### 2 Cập nhật hệ thống
+## Phần B — Cài đặt Zabbix Agent (VM2)
+
+### 1. Kiểm tra mạng và hostname
+
+```bash
+# Đặt hostname
+sudo hostnamectl set-hostname zabbix-agent01
+
+# Kiểm tra hostname
+hostnamectl
+
+# Kiểm tra IP được cấp từ DHCP
+ip addr
+
+# Test kết nối đến Zabbix Server (VM1)
+ping -c 3 192.168.136.131
+```
+
+<img width="681" height="214" alt="image" src="https://github.com/user-attachments/assets/de8fa604-2d1e-424f-82d1-c16c8ab63d21" />
+
+### 2. Cập nhật hệ thống
 
 ```bash
 sudo apt update && sudo apt upgrade -y
 ```
 
----
-
-#### 3 Cài đặt Zabbix Agent 2
+### 3. Cài đặt Zabbix Agent 2
 
 ```bash
 # Tải repository Zabbix 7.0 cho Ubuntu 22.04
@@ -417,11 +565,12 @@ sudo apt install -y zabbix-agent2
 # Kiểm tra phiên bản
 zabbix_agent2 --version
 ```
+
 <img width="627" height="304" alt="image" src="https://github.com/user-attachments/assets/0b695230-d888-48d2-bc89-ffc73bc77ba4" />
 
----
+Ghi chú: VM2 chỉ cần cài mỗi Agent2, không cần Server/DB/Frontend — máy này đóng vai trò "bị giám sát" thôi.
 
-#### 4 Cấu hình Zabbix Agent 2
+### 4. Cấu hình Zabbix Agent 2
 
 ```bash
 # Backup file cấu hình
@@ -443,39 +592,35 @@ Hostname=zabbix-agent01
 
 Giải thích:
 
-* `Server`: IP của Zabbix Server được phép truy vấn Agent.
-* `ServerActive`: Agent chủ động gửi dữ liệu về Server.
-* `Hostname`: Phải trùng với Hostname khi tạo Host trên Zabbix Frontend.
+- `Server`: IP của Zabbix Server được phép truy vấn Agent (chiều Server → Agent, kiểu passive check).
+- `ServerActive`: Agent chủ động gửi dữ liệu về Server (chiều Agent → Server, kiểu active check).
+- `Hostname`: Phải trùng với Hostname khi tạo Host trên Zabbix Frontend, sai là Server không nhận diện được máy này.
 
 Lưu file và thoát.
 
----
-
-#### 5 Khởi động Agent
+### 5. Khởi động Agent
 
 ```bash
 sudo systemctl start zabbix-agent2
 sudo systemctl enable zabbix-agent2
+
 # Kiểm tra trạng thái
 sudo systemctl status zabbix-agent2
 ```
 
 <img width="747" height="236" alt="image" src="https://github.com/user-attachments/assets/124b88f3-bf97-4661-8187-bc159f04c913" />
-  
 
-Kiểm tra port Agent:  
+Kiểm tra port Agent:
 
 ```bash
 sudo ss -tlnp | grep 10050
 ```
 
 Kết quả mong đợi:
+
 <img width="706" height="47" alt="image" src="https://github.com/user-attachments/assets/96e2458b-fce7-4201-aed0-c8a3278d93c1" />
 
-
----
-
-#### 6 Cấu hình Firewall
+### 6. Cấu hình Firewall
 
 ```bash
 sudo ufw allow 10050/tcp comment 'Zabbix Agent'
@@ -487,9 +632,7 @@ sudo ufw reload
 sudo ufw status
 ```
 
----
-
-#### 7 Kiểm tra Agent từ Zabbix Server (VM1)
+### 7. Kiểm tra Agent từ Zabbix Server (VM1)
 
 Nếu chưa có công cụ test:
 
@@ -502,10 +645,8 @@ Thực hiện các lệnh kiểm tra:
 ```bash
 zabbix_get -s 192.168.136.146 -p 10050 -k "agent.ping"
 ```
+
 <img width="574" height="47" alt="image" src="https://github.com/user-attachments/assets/7fc94823-3984-4004-abb6-1decfa99c1dd" />
-
-
----
 
 ```bash
 zabbix_get -s 192.168.136.146 -p 10050 -k "agent.version"
@@ -513,17 +654,11 @@ zabbix_get -s 192.168.136.146 -p 10050 -k "agent.version"
 
 <img width="557" height="48" alt="image" src="https://github.com/user-attachments/assets/2ae842e9-9e38-494b-b24b-361e5ca192c8" />
 
-
----
-
 ```bash
 zabbix_get -s 192.168.136.146 -p 10050 -k "system.hostname"
 ```
 
 <img width="532" height="44" alt="image" src="https://github.com/user-attachments/assets/866567b2-e963-41d6-8f88-beb27a0b9bfe" />
-
-
----
 
 ```bash
 zabbix_get -s 192.168.136.146 -p 10050 -k "system.uname"
@@ -532,13 +667,16 @@ zabbix_get -s 192.168.136.146 -p 10050 -k "system.uname"
 ```bash
 zabbix_get -s 192.168.136.146 -p 10050 -k "vm.memory.size[available]"
 ```
+
 <img width="577" height="63" alt="image" src="https://github.com/user-attachments/assets/b550df27-e96a-42ad-a443-d46fa1284d71" />
 
------
+Ghi chú: `zabbix_get` là lệnh test thủ công phía Server để chọc thẳng vào Agent, không phụ thuộc Frontend — dùng để debug xem Agent trả lời đúng key chưa trước khi add Host trên GUI.
 
-## Thêm VM2 vào Zabbix Frontend
+---
 
-#### 1 Thêm Host
+## Phần C — Thêm VM2 vào Zabbix Frontend
+
+### 1. Thêm Host
 
 Truy cập trình duyệt:
 
@@ -550,7 +688,8 @@ http://<IP_ZABBIX_SERVER>/
 
 **Configuration → Hosts → Create host**
 
-#### Vào mục quản lý Hosts
+Vào mục quản lý Hosts:
+
 ```
 Nhìn sang cột menu màu xanh đậm ở bên trái màn hình.
 Click vào mục Data collection (nằm ngay dưới mục Reports).
@@ -558,10 +697,10 @@ Một menu con sẽ xổ ra, bạn chọn mục Hosts.
 Sau khi vào mục Hosts, nhìn lên góc trên cùng bên phải màn hình, bạn sẽ thấy một nút màu xanh dương có chữ Create host. Hãy click vào đó.
 ```
 
-#### Điền thông tin
+Điền thông tin:
 
 ```
-Host name: Điền zabbix-agent01 
+Host name: Điền zabbix-agent01
 Templates: Click vào ô này, gõ tìm từ khóa Linux by Zabbix agent 2 (hoặc Linux by Zabbix agent tùy thuộc vào bản agent bạn cài dưới client) rồi chọn nó.
 Host groups: Click vào, tìm nhóm Linux servers.
 Interfaces: Nhìn ngay bên dưới mục Groups sẽ có phần Interfaces.
@@ -570,49 +709,52 @@ Click vào chữ Add màu xanh -> Chọn Agent.
 Ở ô Port: Giữ nguyên là 10050.
 Cuối cùng, cuộn xuống dưới cùng bấm nút Add (Màu xanh dương) để lưu lại là xong!
 ```
+
 <img width="581" height="338" alt="image" src="https://github.com/user-attachments/assets/fd37bb85-0280-49a4-b2c6-1d6a20ed4a2c" />
 
----
-
-### 2 Kiểm tra Host đã kết nối
+### 2. Kiểm tra Host đã kết nối
 
 **Data → Hosts**
 
 Kiểm tra cột **Availability**:
 
 ```text
- màu xanh  : Agent kết nối thành công
- màu đỏ    : Không kết nối được
- màu xám   : Chưa poll dữ liệu (đợi 1–2 phút)
+màu xanh  : Agent kết nối thành công
+màu đỏ    : Không kết nối được
+màu xám   : Chưa poll dữ liệu (đợi 1–2 phút)
 ```
 
-#### Kiểm tra từ Server bằng lệnh
+Kiểm tra từ Server bằng lệnh:
 
 ```bash
 sudo zabbix_get -s 192.168.136.146 -p 10050 -k "agent.ping"
 ```
 
 Kết quả mong đợi:
+
 <img width="860" height="79" alt="image" src="https://github.com/user-attachments/assets/91f84486-4d1b-46a5-b5f5-d57927d62fe1" />
 
----
-
-### 3 Kiểm tra dữ liệu thu thập
+### 3. Kiểm tra dữ liệu thu thập
 
 **Monitoring → Latest data**
-````
-Tại ô Hosts: Nhấp Select -> Chọn đúng máy zabbix-agent01.  
+
+```
+Tại ô Hosts: Nhấp Select -> Chọn đúng máy zabbix-agent01.
 Nhấn nút Apply (hoặc Filter).
-Các thẻ thông tin (Item) cốt lõi cần chú ý:system.cpu.util $\rightarrow$ Tải xử lý của CPU (đơn vị %)
-vm.memory.size[available] (Dung lượng RAM còn trống (đơn vị Bytes))
-vfs.fs.size[/,free] (Dung lượng ổ cứng còn trống tại thư mục gốc /)
-system.uptime(Thời gian máy Client đã hoạt động liên tục kể từ lần bật gần nhất.)
-````
+```
+
+Các thẻ thông tin (Item) cốt lõi cần chú ý:
+
+- `system.cpu.util` → Tải xử lý của CPU (đơn vị %)
+- `vm.memory.size[available]` → Dung lượng RAM còn trống (đơn vị Bytes)
+- `vfs.fs.size[/,free]` → Dung lượng ổ cứng còn trống tại thư mục gốc `/`
+- `system.uptime` → Thời gian máy Client đã hoạt động liên tục kể từ lần bật gần nhất
+
 <img width="944" height="437" alt="image" src="https://github.com/user-attachments/assets/d8edeae0-5f61-4cad-b0aa-6acee0137f66" />
 
 <img width="945" height="440" alt="image" src="https://github.com/user-attachments/assets/3992c592-78cb-4c2f-a69f-e90a9fd3109c" />
 
-### Kiểm tra trực tiếp từ Server
+**Kiểm tra trực tiếp từ Server (đối chiếu số liệu):**
 
 ```bash
 sudo zabbix_get -s 192.168.136.146 -p 10050 -k "system.cpu.util"
@@ -625,611 +767,7 @@ sudo zabbix_get -s 192.168.136.146 -p 10050 -k "vm.memory.size[available]"
 ```bash
 sudo zabbix_get -s 192.168.136.146 -p 10050 -k "vfs.fs.size[/,free]"
 ```
+
 <img width="619" height="101" alt="image" src="https://github.com/user-attachments/assets/efaba1cc-fe22-4994-a5db-19f393c46226" />
 
----------------------
-
-# HA cho Zabbix 
-
-**Vai trò từng máy:**
- 
-| VM | Hostname | IP | Vai trò |
-|----|----------|----|---------|
-| VM1 | zabbix-node1 | 192.168.136.131 | Zabbix Server Node 1 (Active) + MariaDB |
-| VM2 | zabbix-node2 | 192.168.136.134 | Zabbix Server Node 2 (Standby) |
-| VM3 | zabbix-agent01 | 192.168.136.146 | Zabbix Agent (host được giám sát) |
- 
-> **Lưu ý:** Trong lab này, MariaDB chạy trên Node1 và cả 2 Zabbix Server node đều kết nối vào đó. Đây là cấu hình đơn giản cho mục đích học tập. Môi trường production cần Database HA riêng (Galera Cluster).
-
-## Cơ chế hoạt động HA
- 
-```
-Trạng thái bình thường:
- 
-  [Node1 - ACTIVE]  ←── poll data, process triggers, send alerts
-       │
-       │ cập nhật heartbeat vào DB mỗi 5 giây
-       ▼
-  [MariaDB]  ←── [Node2 - STANDBY] đọc heartbeat của Node1
-       
-  Node2 không làm gì, chỉ theo dõi heartbeat của Node1
-Khi Node1 bị down:
- 
-  [Node1 - DOWN]  ✗  heartbeat ngừng cập nhật
-       │
-       │ Sau 30 giây không thấy heartbeat
-       ▼
-  [Node2] phát hiện → tự promote thành ACTIVE
-  [Node2 - ACTIVE]  ←── tiếp tục toàn bộ monitoring
-```
-# 1. Cài đặt trên máy backup
-### 1.2 Cập nhật hệ thống VM2
- 
-```bash
-sudo apt update && sudo apt upgrade -y
-```
- 
----
- 
-### 1.3 Cài đặt Zabbix 7.0 repository trên VM2
- 
-```bash
-# Tải Zabbix 7.0 LTS repository
-wget https://repo.zabbix.com/zabbix/7.0/ubuntu/pool/main/z/zabbix-release/zabbix-release_7.0-2+ubuntu22.04_all.deb
- 
-# Cài đặt repository
-sudo dpkg -i zabbix-release_7.0-2+ubuntu22.04_all.deb
- 
-# Cập nhật package list
-sudo apt update
-```
- 
----
- 
-### 1.4 Cài đặt Zabbix Server trên VM2
- 
-```bash
-# Cài Zabbix Server (dùng MySQL vì dùng chung MariaDB với Node1)
-# Không cài frontend, không cài MariaDB (dùng chung DB của Node1)
-sudo apt install -y \
-  zabbix-server-mysql \
-  zabbix-agent2
- 
-# Xác nhận đã cài
-sudo dpkg -l | grep zabbix | awk '{print $2, $3}'
-```
- <img width="481" height="74" alt="image" src="https://github.com/user-attachments/assets/ee2f7be3-1365-41d9-873a-55f0b423b15d" />
-
- 
----
- 
-## Phần 2 — Cho phép Node2 kết nối vào Database của Node1
- 
-> Thực hiện trên **VM1** (192.168.136.131) — nơi có MariaDB.
- 
-### 2.1 Tạo user cho Node2 kết nối từ xa
- 
-```bash
-# Đăng nhập MariaDB trên VM1
-sudo mysql -u root -p'123456a@'
-```
- 
-Chạy các lệnh SQL trong MariaDB prompt:
- 
-```sql
--- Tạo user cho phép Node2 kết nối từ IP của Node2
-CREATE USER 'zabbix'@'192.168.136.145' IDENTIFIED BY 'Zabbix@DB2026!';
- 
-GRANT ALL PRIVILEGES ON zabbix.* TO 'zabbix'@'192.168.136.145';
- 
-FLUSH PRIVILEGES;
- 
-EXIT;
-```
- 
-Kiểm tra user đã tạo:
- 
-```bash
-sudo mysql -u root -p'123456a@' \
-  -e "SELECT user, host FROM mysql.user WHERE user='zabbix';"
-```
- 
-<img width="395" height="114" alt="image" src="https://github.com/user-attachments/assets/992b0ebf-b812-4f97-b79a-c611b7c0d2da" />
- 
----
- 
-### 2.2 Cho phép MariaDB lắng nghe từ bên ngoài
- 
-Mặc định MariaDB chỉ lắng nghe trên `127.0.0.1`. Cần cho phép Node2 kết nối vào:
- 
-```bash
-# Trên VM1
-sudo nano /etc/mysql/mariadb.conf.d/50-server.cnf
-```
- 
-Tìm dòng `bind-address` và sửa:
- 
-```ini
-# Tìm dòng này:
-bind-address = 127.0.0.1
- 
-# Sửa thành (lắng nghe tất cả interface):
-bind-address = 0.0.0.0
-```
- 
-Lưu file và restart MariaDB:
- 
-```bash
-sudo systemctl restart mariadb
- 
-# Kiểm tra MariaDB đang lắng nghe port 3306
-sudo ss -tlnp | grep 3306
-```
- 
-<img width="665" height="60" alt="image" src="https://github.com/user-attachments/assets/cd50cd30-5a3d-48c1-98da-6bce3560c261" />
-
----
- 
-### 2.3 Mở firewall port 3306 trên VM1
- 
-```bash
-# Trên VM1 — cho phép Node2 kết nối vào MariaDB
-sudo ufw allow from 192.168.136.145 to any port 3306 comment 'Zabbix Node2 to DB'
- 
-sudo ufw reload
-sudo ufw status
-```
-<img width="572" height="184" alt="image" src="https://github.com/user-attachments/assets/7bd1fa14-4db3-479c-b312-4bdffd8b5f75" />
- 
----
- 
-### 2.4 Kiểm tra kết nối từ Node2 vào DB của Node1
- 
-```bash
-# Trên VM2 — test kết nối vào MariaDB của VM1
-mysql -h 192.168.136.131 -u zabbix -p'Zabbix@DB2026!' \
-  -e "SELECT COUNT(*) AS hosts FROM zabbix.hosts;"
-```
- 
-<img width="921" height="197" alt="image" src="https://github.com/user-attachments/assets/bd52c7c5-4472-472b-a626-5d84967808c3" />
- 
----
- 
-## Phần 3 — Cấu hình HA trên Node1
- 
-> Thực hiện trên **VM1** (192.168.136.131).
- 
-### 3.1 Chỉnh sửa cấu hình Zabbix Server Node1
- 
-```bash
-# Backup file cấu hình hiện tại
-sudo cp /etc/zabbix/zabbix_server.conf /etc/zabbix/zabbix_server.conf.bak_ha
- 
-# Mở file cấu hình
-sudo nano /etc/zabbix/zabbix_server.conf
-```
- 
-Tìm và chỉnh sửa (dùng `Ctrl+W` để tìm trong nano):
- 
-```ini
-# Tìm dòng: # HANodeName=
-# Bỏ dấu # và điền tên node:
-HANodeName=zabbix-node1
- 
-# Tìm dòng: # NodeAddress=
-# Bỏ dấu # và điền địa chỉ của node này:
-NodeAddress=192.168.136.131:10051
-```
-<img width="291" height="182" alt="image" src="https://github.com/user-attachments/assets/73a68aae-8119-4e3b-b004-c58c326e5911" />
-
----
- 
-### 3.2 Restart Zabbix Server Node1
- 
-```bash
-sudo systemctl restart zabbix-server
- 
-# Kiểm tra không có lỗi
-sudo systemctl status zabbix-server
-```
- 
-Kiểm tra log — Node1 phải khởi động ở chế độ **active**:
- 
-```bash
-sudo tail -20 /var/log/zabbix/zabbix_server.log | grep -i "ha\|active\|standby\|node"
-```
- 
-Kết quả mong đợi:
- 
-<img width="698" height="52" alt="image" src="https://github.com/user-attachments/assets/394b8e91-075a-4798-9fbf-c8e1402736c0" />
-
- 
----
- 
-## Phần 4 — Cấu hình HA trên Node2
- 
-> Thực hiện trên **VM2** (192.168.136.145).
- 
-### 4.1 Chỉnh sửa cấu hình Zabbix Server Node2
- 
-```bash
-# Backup
-sudo cp /etc/zabbix/zabbix_server.conf /etc/zabbix/zabbix_server.conf.bak
- 
-# Mở file cấu hình
-sudo nano /etc/zabbix/zabbix_server.conf
-```
- 
-Tìm và sửa các dòng sau:
- 
-**Phần Database — trỏ vào DB của Node1:**
- 
-```ini
-# Tìm dòng: DBHost=localhost
-# Sửa thành IP của Node1 (nơi có MariaDB):
-DBHost=192.168.136.131
- 
-# Tìm dòng: # DBPassword=
-# Sửa thành:
-DBPassword=Zabbix@DB2026!
- 
-# Tìm dòng: DBSocket=
-# Comment lại dòng này (Node2 kết nối qua TCP/IP không phải socket)
-# DBSocket=/var/run/mysqld/mysqld.sock
-```
- 
-**Phần HA:**
- 
-```ini
-# Tìm dòng: # HANodeName=
-# Sửa thành:
-HANodeName=zabbix-node2
- 
-# Tìm dòng: # NodeAddress=
-# Sửa thành:
-NodeAddress=192.168.136.145:10051
-```
----
- 
-### 4.2 Cấu hình Zabbix Agent2 trên Node2 (tự giám sát)
- 
-```bash
-sudo nano /etc/zabbix/zabbix_agent2.conf
-```
- 
-Tìm và sửa:
- 
-```ini
-Server=192.168.136.131
- 
-ServerActive=192.168.136.131
- 
-Hostname=zabbix-node2
-```
- 
-Lưu file.
- 
----
- 
-### 4.3 Khởi động dịch vụ trên Node2
- 
-```bash
-# Khởi động Zabbix Server
-sudo systemctl start zabbix-server
-sudo systemctl enable zabbix-server
- 
-# Khởi động Agent2
-sudo systemctl start zabbix-agent2
-sudo systemctl enable zabbix-agent2
- 
-# Kiểm tra trạng thái
-sudo systemctl status zabbix-server
-sudo systemctl status zabbix-agent2
-```
- 
-Kiểm tra log — Node2 phải khởi động ở chế độ **standby**:
- 
-```bash
-sudo tail -20 /var/log/zabbix/zabbix_server.log | grep -i "ha\|active\|standby\|node"
-```
- 
-<img width="673" height="101" alt="image" src="https://github.com/user-attachments/assets/28649b2b-8348-4171-8a7e-e771412b91a9" />
-
- 
----
- 
-### 4.4 Mở firewall trên Node2
- 
-```bash
-sudo ufw allow 10051/tcp comment 'Zabbix Server trapper'
-sudo ufw allow 10050/tcp comment 'Zabbix Agent'
-sudo ufw allow 22/tcp    comment 'SSH'
- 
-sudo ufw reload
-sudo ufw status
-```
- <img width="570" height="276" alt="image" src="https://github.com/user-attachments/assets/e87e4727-a5bb-4c7d-a90d-617d2ccf896b" />
-
----
- 
-## Phần 5 — Kiểm tra HA hoạt động trên GUI
- 
-### 5.1 Đăng nhập Zabbix Frontend
- 
-```
-http://192.168.136.131/
-```
- 
-Đăng nhập với tài khoản Admin.
- 
----
- 
-### 5.2 Xem trạng thái HA Nodes
- 
-Trên menu bên trái, vào:
- 
-```
-Reports  →System information → High availability ở cuối
-```
- 
-Màn hình hiển thị danh sách nodes:
- 
-<img width="959" height="437" alt="image" src="https://github.com/user-attachments/assets/f8e065b3-734e-42bb-aa8d-9893881c11df" />
-
- 
----
- 
-### 5.3 Kiểm tra qua lệnh trực tiếp trên database
- 
-```bash
-# Trên VM1
-sudo mysql -u root -p'123456a@' zabbix -e "
-SELECT name,
-       status,
-       FROM_UNIXTIME(lastaccess) AS last_seen
-FROM ha_node
-ORDER BY status;"
-```
- 
-<img width="440" height="201" alt="image" src="https://github.com/user-attachments/assets/28f8c808-61d6-4a56-ab2d-7489feb0f690" />
-
- 
----
- 
-## Phần 6 — Test Failover (Chuyển đổi dự phòng)
- 
-Đây là bước quan trọng nhất — kiểm tra HA thực sự hoạt động.
- 
-### 6.1 Chuẩn bị — mở 2 terminal song song
- 
-**Terminal 1** — Theo dõi log Node2 (VM2):
- 
-```bash
-# SSH vào VM2
-ssh apache1@192.168.136.145
- 
-# Theo dõi log real-time
-sudo tail -f /var/log/zabbix/zabbix_server.log | grep -i "ha\|active\|standby\|failover\|node"
-```
- 
-**Terminal 2** — Thực hiện test trên Node1 (VM1):
- 
-```bash
-# SSH vào VM1
-ssh iamhieu@192.168.136.131
-```
- 
----
- 
-### 6.2 Dừng Zabbix Server trên Node1 (giả lập sự cố)
- 
-Trên **Terminal 2 (VM1)**:
- 
-```bash
-# Dừng Zabbix Server Node1
-sudo systemctl stop zabbix-server
- 
-# Xác nhận đã dừng
-sudo systemctl status zabbix-server
-# Phải thấy: Active: inactive (dead)
-```
- 
----
- 
-### 6.3 Quan sát Node2 tự động promote
- 
-sau khoảng **30 giây**, sẽ thấy log:  
-
-<img width="776" height="106" alt="image" src="https://github.com/user-attachments/assets/ec93e7de-1d34-470b-88b8-68e31beb19a1" />
-
- 
----
- 
-### 6.4 Xác nhận Node2 đã trở thành Active
- 
-Kiểm tra trên GUI (`Administration → High availability`):
- 
-<img width="950" height="438" alt="image" src="https://github.com/user-attachments/assets/630d47a0-9414-41b6-ae06-125f2f099c54" />
-
-
-
- 
-Kiểm tra monitoring vẫn tiếp tục — vào `Monitoring → Latest data` trên GUI, dữ liệu vẫn cập nhật bình thường.
- 
----
- 
-### 6.5 Khôi phục Node1 và quan sát
- 
-Trên **Terminal 2 (VM1)**:
- 
-```bash
-# Khởi động lại Zabbix Server Node1
-sudo systemctl start zabbix-server
-```
- 
-Sau vài giây, kiểm tra log Node1:
- 
-```bash
-sudo tail -20 /var/log/zabbix/zabbix_server.log | grep -i "ha\|active\|standby"
-```
- 
-<img width="648" height="81" alt="image" src="https://github.com/user-attachments/assets/417baa72-afde-4f86-803b-7dc5277481df" />
-
- 
-Node1 **tự nhận biết Node2 đang active** và tự chuyển sang **standby** — không xảy ra xung đột.
- 
-Kiểm tra GUI:
- 
-<img width="857" height="78" alt="image" src="https://github.com/user-attachments/assets/41aaf88e-c916-4062-a956-ae94ac2b5739" />
-
- 
----
- 
-
- 
-## Phần 7 — Cấu hình Web Frontend kết nối cả 2 Node
- 
-Mặc định, Web Frontend đang cấu hình kết nối đến `127.0.0.1:10051` (chỉ Node1). Cần cho phép Frontend biết về cả 2 nodes để khi Node1 down, Frontend vẫn hoạt động.
- 
-### 7.1 Sửa file cấu hình Frontend
- 
-```bash
-# Trên VM1
-sudo nano /etc/zabbix/web/zabbix.conf.php
-```
- 
-Tìm các dòng liên quan đến server:
- 
-```php
-// Tìm:
-$ZBX_SERVER      = 'localhost';
-$ZBX_SERVER_PORT = '10051';
- 
-// Sửa thành (kết nối đến Node1, dùng IP thay vì localhost):
-$ZBX_SERVER      = '192.168.136.131';
-$ZBX_SERVER_PORT = '10051';
-```
- 
-Lưu file.
- 
----
- 
-### 7.2 Cài đặt Web Frontend trên Node2 (tuỳ chọn — để Frontend HA)
- 
-Nếu muốn Web Frontend cũng dự phòng (không bắt buộc cho lab cơ bản):
- 
-```bash
-# Trên VM2
-sudo apt install -y \
-  zabbix-frontend-php \
-  zabbix-nginx-conf
- 
-# Cấu hình Nginx
-sudo nano /etc/zabbix/nginx.conf
-```
- 
-Sửa:
- 
-```nginx
-listen          80;
-server_name     192.168.136.145;
-```
- 
-```bash
-sudo rm -f /etc/nginx/sites-enabled/default
- 
-# Cấu hình PHP timezone
-sudo nano /etc/zabbix/php-fpm.conf
-# Sửa: php_value[date.timezone] = Asia/Ho_Chi_Minh
-```
- 
-Tạo file cấu hình Frontend:
- 
-```bash
-sudo cp /etc/zabbix/web/zabbix.conf.php.example \
-        /etc/zabbix/web/zabbix.conf.php 2>/dev/null || true
- 
-sudo nano /etc/zabbix/web/zabbix.conf.php
-```
- 
-Điền thông tin kết nối database và server:
- 
-```php
-<?php
-$DB['TYPE']               = 'MYSQL';
-$DB['SERVER']             = '192.168.136.131';
-$DB['PORT']               = '3306';
-$DB['DATABASE']           = 'zabbix';
-$DB['USER']               = 'zabbix';
-$DB['PASSWORD']           = 'Zabbix@DB2026!';
-$DB['SCHEMA']             = '';
-$DB['ENCRYPTION']         = false;
-$DB['KEY_FILE']           = '';
-$DB['CERT_FILE']          = '';
-$DB['CA_FILE']            = '';
-$DB['VERIFY_HOST']        = false;
-$DB['CIPHER_LIST']        = '';
-$DB['VAULT_URL']          = '';
-$DB['VAULT_DB_PATH']      = '';
-$DB['VAULT_TOKEN']        = '';
-$DB['VAULT_CERT_FILE']    = '';
-$DB['VAULT_KEY_FILE']     = '';
-$ZBX_SERVER               = '192.168.136.145';
-$ZBX_SERVER_PORT          = '10051';
-$ZBX_SERVER_NAME          = 'My Zabbix Lab';
-$IMAGE_FORMAT_DEFAULT     = IMAGE_FORMAT_PNG;
-```
- 
-```bash
-sudo systemctl start nginx php8.1-fpm
-sudo systemctl enable nginx php8.1-fpm
-```
- 
-Sau bước này, truy cập Frontend qua cả 2 địa chỉ:
-- `http://192.168.136.131/` — Node1
-- `http://192.168.136.145/` — Node2
----
- 
-## Phần 8 — Thêm Node2 vào Zabbix để giám sát
- 
-### 8.1 Thêm Host zabbix-node2 vào Zabbix Frontend
- 
-Đăng nhập vào GUI → `Data collection → Hosts → Create host`
- 
-**Tab: Host**
- 
-```
-Host name:     zabbix-node2
-Visible name:  Zabbix Server Node2 (Standby)
-Templates:     Linux by Zabbix agent 2
-Host groups:   Zabbix servers
-```
- 
-**Interfaces:**
- 
-```
-Loại:     Agent
-IP:       192.168.136.145
-Port:     10050
-```
- <img width="590" height="338" alt="image" src="https://github.com/user-attachments/assets/8f123878-32d7-4dc8-8c44-504d5d12871d" />
-
----
- 
-### 8.2 Kiểm tra Agent Node2 kết nối
- 
-Sau 1–2 phút, vào `Data collection → Hosts` → kiểm tra cột **Availability** của `zabbix-node2`:
- 
-
-Kiểm tra bằng lệnh từ Node1:
- 
-```bash
-# Trên VM1
-sudo zabbix_get -s 192.168.136.145 -p 10050 -k "agent.ping"
-
-```
- <img width="563" height="41" alt="image" src="https://github.com/user-attachments/assets/565ae96a-bc01-4f73-aef0-09dbd49cd2db" />
-
----
-<img width="959" height="470" alt="image" src="https://github.com/user-attachments/assets/cc6cd804-d731-4675-860f-f98ce01cd2bd" />
-
+Ghi chú: so số liệu `zabbix_get` với số hiển thị trên `Latest data` — khớp nhau tức là pipeline Agent → Server → DB → Frontend đã chạy đúng hết.
