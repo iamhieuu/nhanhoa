@@ -2,10 +2,6 @@
 
 > **Hệ điều hành:** Ubuntu v22.04.5 
 > **Phiên bản:** cPanel/WHM 134.0.43
-> **Giao diện (Theme):** Jupiter
-> **Domain thực hành:** `hieucute.id.vn`
-> **Username cPanel:** `iamhieu`
-> **VPS IP:** `103.159.51.228`
 > **Truy cập cPanel:** `https://103.159.51.228:2083` hoặc `https://hieucute.id.vn:2083`
 > **Truy cập WHM:** `https://103.159.51.228:2087`
 > **Truy cập Webmail:** `https://103.159.51.228:2096`
@@ -61,9 +57,9 @@ cPanel/WHM tách biệt hoàn toàn theo cổng — khác với DirectAdmin dùn
 
 | Cổng | Dịch vụ | Dành cho | Địa chỉ thực tế |
 |------|---------|----------|----------------|
-| **2087** | WHM (HTTPS) | Root / Reseller — quản trị toàn server | `https://103.159.51.228:2087` |
-| **2083** | cPanel (HTTPS) | User — quản lý 1 tài khoản hosting | `https://103.159.51.228:2083` |
-| **2096** | Webmail (HTTPS) | Người dùng cuối — đọc/gửi email | `https://103.159.51.228:2096` |
+| **2087** | WHM  | Root / Reseller — quản trị toàn server | `https://103.159.51.228:2087` |
+| **2083** | cPanel | User — quản lý 1 tài khoản hosting | `https://103.159.51.228:2083` |
+| **2096** | Webmail | Người dùng cuối — đọc/gửi email | `https://103.159.51.228:2096` |
 
 
 ---
