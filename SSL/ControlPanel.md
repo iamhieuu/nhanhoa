@@ -62,7 +62,7 @@ Copy CSR → gửi nhà cung cấp SSL.
 **Bước 4: Force HTTPS**
 ```
 User Level → Domain Setup → chọn DOMAIN
-→ ✅ Force SSL with https redirect
+→  Force SSL with https redirect
 → Save
 ```
 
@@ -268,8 +268,8 @@ Plesk → Websites & Domains → chọn DOMAIN
 → SSL/TLS Certificates
 → Get it free (Let's Encrypt)
 → Điền email
-→ ✅ Secure the domain
-→ ✅ Secure www.DOMAIN
+→  Secure the domain
+→  Secure www.DOMAIN
 → Get it Free
 ```
 
@@ -295,7 +295,7 @@ Sau đó apply vào domain:
 → Websites & Domains → DOMAIN
 → Hosting Settings
 → SSL/TLS certificate: chọn SSL_DOMAIN_2026
-→ ✅ Redirect from http to https
+→  Redirect from http to https
 → OK
 ```
 
