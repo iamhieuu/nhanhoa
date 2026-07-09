@@ -1,6 +1,44 @@
 # NFS Server & LVM
 
 ---
+## Mục lục
+ 
+- [Phần 1: NFS Server](#phần-1-nfs-server)
+  - [1.1. Tổng quan](#11-tổng-quan)
+  - [1.2. Cài đặt NFS Server](#12-cài-đặt-nfs-server)
+    - [Bước 1: Cài đặt dịch vụ NFS](#bước-1-cài-đặt-dịch-vụ-nfs)
+    - [Bước 2: Tạo thư mục muốn share và phân quyền](#bước-2-tạo-thư-mục-muốn-share-và-phân-quyền)
+    - [Bước 3: Cấu hình file /etc/exports](#bước-3-cấu-hình-file-etcexports)
+    - [Bước 4: Áp dụng cấu hình, khởi động dịch vụ và mở tường lửa](#bước-4-áp-dụng-cấu-hình-khởi-động-dịch-vụ-và-mở-tường-lửa)
+  - [1.3. Kết nối NFS Server với Client](#13-kết-nối-nfs-server-với-client)
+    - [1.3.1. Client là Windows](#131-client-là-windows)
+    - [1.3.2. Client là Linux](#132-client-là-linux)
+  - [1.4. Permanent Mount cho NFS Client trên Ubuntu 22.04](#14-permanent-mount-cho-nfs-client-trên-ubuntu-2204)
+    - [Bước 1: Mở file fstab](#bước-1-mở-file-fstab)
+    - [Bước 2: Thêm dòng cấu hình](#bước-2-thêm-dòng-cấu-hình)
+    - [Bước 3: Kiểm tra cấu hình trước khi reboot](#bước-3-kiểm-tra-cấu-hình-trước-khi-reboot)
+- [Phần 2: LVM (Logical Volume Manager)](#phần-2-lvm-logical-volume-manager)
+  - [2.1. Tổng quan](#21-tổng-quan)
+  - [2.2. Quá trình khởi tạo LVM](#22-quá-trình-khởi-tạo-lvm)
+    - [Bước 1: Tạo Physical Volume](#bước-1-tạo-physical-volume)
+    - [Bước 2: Tạo Volume Group](#bước-2-tạo-volume-group)
+    - [Bước 3: Tạo Logical Volume](#bước-3-tạo-logical-volume)
+    - [Bước 4: Tạo Filesystem trên LV](#bước-4-tạo-filesystem-trên-lv)
+    - [Bước 5: Permanent Mount trên Ubuntu 22.04 (chỉnh sửa fstab)](#bước-5-permanent-mount-trên-ubuntu-2204-chỉnh-sửa-fstab)
+  - [2.3. Mở rộng LV (Extend)](#23-mở-rộng-lv-extend)
+  - [2.4. Thêm ổ cứng mới để mở rộng LV](#24-thêm-ổ-cứng-mới-để-mở-rộng-lv)
+    - [Bước 1: Tạo Physical Volume](#bước-1-tạo-physical-volume-1)
+    - [Bước 2: Mở rộng Volume Group](#bước-2-mở-rộng-volume-group)
+    - [Bước 3: Mở rộng Logical Volume](#bước-3-mở-rộng-logical-volume)
+  - [2.5. Out / thay thế 1 ổ cứng khỏi hệ thống LVM](#25-out--thay-thế-1-ổ-cứng-khỏi-hệ-thống-lvm)
+    - [Bước 1: Chuyển dữ liệu (pvmove)](#bước-1-chuyển-dữ-liệu-pvmove)
+    - [Bước 2: Gỡ ổ cứng ra khỏi VG](#bước-2-gỡ-ổ-cứng-ra-khỏi-vg)
+    - [Bước 3: Xóa định dạng LVM, tháo ổ](#bước-3-xóa-định-dạng-lvm-tháo-ổ)
+  - [2.6. Xóa Logical Volume, Volume Group, Physical Volume](#26-xóa-logical-volume-volume-group-physical-volume)
+  - [2.7. Bổ sung: các lệnh xem thông tin LVM thường dùng](#27-bổ-sung-các-lệnh-xem-thông-tin-lvm-thường-dùng)
+  - [2.8. Bổ sung: Đổi tên LV/VG](#28-bổ-sung-đổi-tên-lvvg)
+  - [2.9. Bổ sung: LVM Snapshot (chụp nhanh dữ liệu)](#29-bổ-sung-lvm-snapshot-chụp-nhanh-dữ-liệu)
+---
 
 ## Phần 1: NFS Server
 
