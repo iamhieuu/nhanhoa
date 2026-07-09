@@ -47,8 +47,36 @@ Kiến trúc Linux gồm 5 lớp chính, xếp từ thấp đến cao:
 │         Hardware Layer          │  ← CPU, RAM, Disk, Network
 └─────────────────────────────────┘
 ```
-
-
+Xem nhanh cây thư mục 2 cấp: tree / -L 2
+```
+/ (Root - gốc của tất cả)
+├── /bin    → Lệnh cơ bản ai cũng dùng được (ls, cp, mv, cat)
+├── /sbin   → Lệnh chỉ dành cho quản trị (fdisk, mount)
+├── /boot   → Nơi chứa Kernel và bộ khởi động máy
+├── /dev    → Đại diện cho các thiết bị phần cứng (ổ cứng sda, cổng tty...)
+├── /etc    → Nơi chứa toàn bộ file cấu hình hệ thống
+├── /home   → Nhà riêng của từng user
+│      ├── /home/iamhieu
+│      └── /home/username
+├── /lib    → Thư viện dùng chung cho chương trình
+├── /media  → Nơi tự động gắn USB, CD khi cắm vào
+├── /mnt    → Nơi gắn ổ đĩa/thư mục tạm thời (thủ công)
+├── /opt    → Phần mềm bên thứ ba cài thêm vào
+├── /proc   → Thông tin "sống" về Kernel và tiến trình (ảo, không có thật trên đĩa)
+├── /root   → Nhà riêng của user root
+├── /run    → Dữ liệu runtime, sinh ra khi máy đang chạy
+├── /srv    → Dữ liệu phục vụ dịch vụ (web, ftp)
+├── /sys    → Thông tin phần cứng & kernel (cũng là ảo)
+├── /tmp    → Rác tạm, reboot là mất
+├── /usr    → Kho ứng dụng & tiện ích cho user
+│      ├── /usr/bin   → Chương trình người dùng
+│      ├── /usr/lib   → Thư viện
+│      └── /usr/share → Tài nguyên dùng chung
+└── /var    → Dữ liệu hay thay đổi (log, cache, mail)
+       ├── /var/log   → File log
+       ├── /var/cache → Dữ liệu cache
+       └── /var/www   → File web server
+```
 ### 2.1 Kernel
 
 Kernel là lõi của hệ điều hành, chịu trách nhiệm ảo hóa tài nguyên phần cứng và phân phối cho các tiến trình.
