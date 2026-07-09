@@ -1,3 +1,29 @@
+# SSL control panel
+
+----
+
+## Mục lục
+
+- [7. DIRECTADMIN — Cài SSL](#7-directadmin--cài-ssl)
+  - [7a. Let's Encrypt (miễn phí, tự động)](#7a-lets-encrypt-miễn-phí-tự-động)
+  - [7b. SSL Trả phí — Paste thủ công](#7b-ssl-trả-phí--paste-thủ-công)
+  - [7c. DA Admin — Cài SSL cho hostname server](#7c-da-admin--cài-ssl-cho-hostname-server)
+- [8. CPANEL — Cài SSL](#8-cpanel--cài-ssl)
+  - [8a. Let's Encrypt / AutoSSL (tự động)](#8a-lets-encrypt--autossl-tự-động)
+  - [8b. SSL Trả phí — Upload qua WHM](#8b-ssl-trả-phí--upload-qua-whm)
+  - [8c. Force HTTPS trong cPanel](#8c-force-https-trong-cpanel)
+- [9. AAPANEL — Cài SSL](#9-aapanel--cài-ssl)
+  - [9a. Let's Encrypt (miễn phí)](#9a-lets-encrypt-miễn-phí)
+  - [9b. SSL Trả phí — Paste thủ công](#9b-ssl-trả-phí--paste-thủ-công)
+  - [9c. aaPanel Nginx config mẫu (sinh tự động, tham khảo)](#9c-aapanel-nginx-config-mẫu-sinh-tự-động-tham-khảo)
+- [10. PLESK — Cài SSL](#10-plesk--cài-ssl)
+  - [10a. Let's Encrypt](#10a-lets-encrypt)
+  - [10b. SSL Trả phí — Upload](#10b-ssl-trả-phí--upload)
+  - [10c. Plesk — SSL qua CLI](#10c-plesk--ssl-qua-cli)
+
+---
+
+
 ## 7. DIRECTADMIN — Cài SSL
 
 > DA quản lý cert theo từng user/domain. Có 2 luồng: Let's Encrypt (1 click) và SSL trả phí (paste thủ công).
