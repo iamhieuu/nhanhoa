@@ -1,7 +1,20 @@
 # VirtualHost — SSL cho (Apache / Nginx / Tomcat)
 
 ---
+## Mục lục
 
+- [1. NGINX](#1-nginx)
+- [2. APACHE](#2-apache)
+- [3. TOMCAT (Nginx làm SSL Termination)](#3-tomcat-nginx-làm-ssl-termination)
+  - [3a. Nginx — Reverse Proxy → Tomcat](#3a-nginx--reverse-proxy--tomcat)
+  - [3b. Tomcat — `server.xml` (lắng nghe nội bộ)](#3b-tomcat--serverxml-lắng-nghe-nội-bộ)
+- [4. Gộp fullchain.crt](#4-gộp-fullchaincrt)
+- [5. Checklist sau khi cài SSL](#5-checklist-sau-khi-cài-ssl)
+- [6. NGINX REVERSE PROXY → APACHE (Nginx làm frontend SSL)](#6-nginx-reverse-proxy--apache-nginx-làm-frontend-ssl)
+  - [6a. Đổi Apache sang port 8080](#6a-đổi-apache-sang-port-8080)
+  - [6b. Nginx config — SSL termination + proxy → Apache](#6b-nginx-config--ssl-termination--proxy--apache)
+  - [6c. Apache VirtualHost (port 8080, nhận từ Nginx)](#6c-apache-virtualhost-port-8080-nhận-từ-nginx)
+  - 
 ## 1. NGINX 
 
 **File:** `/etc/nginx/conf.d/DOMAIN.conf`
