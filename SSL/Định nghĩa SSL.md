@@ -1,8 +1,4 @@
-# SSL/TLS CHUYÊN ĐỀ 1: ĐỊNH NGHĨA SSL, TLS, HTTPS VÀ NGUYÊN LÝ HOẠT ĐỘNG
-
-> **Loại tài liệu:** Tài liệu định nghĩa chuyên đề – dùng cho đào tạo nội bộ (seminar intern) và báo cáo thực tập
-> **Phạm vi:** Khái niệm nền tảng – không bao gồm hướng dẫn cài đặt hoặc thao tác dòng lệnh
-> **Nguồn tham khảo:** Tổng hợp từ tài liệu thực tập ngày 42 (SSL Termination) và DigiCert – *What is SSL, TLS and HTTPS?*
+# 1: ĐỊNH NGHĨA SSL, TLS, HTTPS VÀ NGUYÊN LÝ HOẠT ĐỘNG
 
 ---
 
@@ -36,6 +32,7 @@
    - 7.2. [Thuật toán trao đổi khóa phổ biến](#72-thuật-toán-trao-đổi-khóa-phổ-biến)
 8. [Bảng thuật ngữ (Glossary)](#8-bảng-thuật-ngữ-glossary)
 9. [Tài liệu tham khảo](#9-tài-liệu-tham-khảo)
+
 ---
 
 ## 1. SSL là gì? TLS là gì?
@@ -235,6 +232,3 @@ Cặp khóa Public/Private là nền tảng của mã hóa bất đối xứng, 
 
 - DigiCert – *What is SSL, TLS and HTTPS?*: `https://www.digicert.com/what-is-ssl-tls-and-https`
 
----
-
-*Tài liệu được biên soạn phục vụ mục đích đào tạo nội bộ và báo cáo thực tập, tổng hợp và diễn giải lại từ tài liệu chính thức của DigiCert và nội dung thực tập cá nhân.*
