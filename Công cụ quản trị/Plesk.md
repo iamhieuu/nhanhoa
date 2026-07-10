@@ -1,7 +1,5 @@
-<img width="1266" height="649" alt="image" src="https://github.com/user-attachments/assets/dccf9124-44ef-4df5-a68e-746eb887fba5" /># Hướng dẫn sử dụng Plesk Obsidian (Admin & Customer)
+# Control panel Plesk
 
-> **Hệ điều hành:** Linux (Ubuntu/CentOS/AlmaLinux) hoặc Windows Server
-> **Phiên bản:** Plesk Obsidian (bản mới nhất, cập nhật liên tục theo chu kỳ)
 > **Truy cập Plesk (Admin/Reseller/Customer dùng chung 1 cổng):** `https://103.179.190.194:8443` hoặc `https://<domain>:8443`
 > **Truy cập Webmail:** thường qua `https://webmail.<domain>` hoặc link **Webmail** ngay trong menu Mail của từng domain (không có cổng cố định riêng như cPanel 2096)
 
@@ -351,8 +349,10 @@ Chọn domain trong danh sách **Subscriptions** và Manage in Customer Panel
 <img width="1869" height="858" alt="image" src="https://github.com/user-attachments/assets/3f53299f-7aab-41f9-ad56-191012a60f7b" />
 
 #### Cài SSL có trả phí 
-Trong trang “SSL/TLS Certificates“, nhấp vào nút “Manage” rồi sau đó nhấp vào nút “Add SSL/TLS Certificate” để bắt đầu quá trình cài đặt SSL.  
+Trong trang “SSL/TLS Certificates“, nhấp vào nút “Manage” rồi sau đó nhấp vào nút “Add SSL/TLS Certificate” để bắt đầu quá trình cài đặt SSL.    
+
 <img width="1870" height="913" alt="image" src="https://github.com/user-attachments/assets/278c6256-bde5-4eb2-8902-e0ae9c3b5189" />
+
 <img width="1871" height="944" alt="image" src="https://github.com/user-attachments/assets/fc906661-d1ef-4639-8d42-16576927d8ca" />
 
 Nhập các thông tin cần thiết 
@@ -365,12 +365,14 @@ Upload các file key hoặc dán dạng text ở bên dưới, sau đó ấn upl
 
 ### 2.10 Security – Firewall, Fail2Ban, ModSecurity
 
-**Đường dẫn:** Plesk (Admin) → **Tools & Settings** → nhóm **Security**
+**Đường dẫn:** Plesk (Admin) → **Tools & Settings** → nhóm **Security**  
+
 <img width="351" height="328" alt="image" src="https://github.com/user-attachments/assets/5f2b908b-d7c4-43cb-aef1-dacf02bbaa9e" />
 
 #### Firewall
 
-**Firewall** → bật **Firewall Protection**, cấu hình **Firewall Rules** theo port/protocol/IP, kích hoạt **Panic Mode** khi cần chặn khẩn cấp toàn bộ lưu lượng.
+**Firewall** → bật **Firewall Protection**, cấu hình **Firewall Rules** theo port/protocol/IP, kích hoạt **Panic Mode** khi cần chặn khẩn cấp toàn bộ lưu lượng.  
+
 <img width="1173" height="835" alt="image" src="https://github.com/user-attachments/assets/cb25651a-2124-4eff-9811-cb8fd0dd8742" />
 
 #### Fail2Ban (chống brute-force)
@@ -391,8 +393,9 @@ fail2ban-client status ssh
 # Gỡ chặn 1 IP cụ thể
 fail2ban-client set sshd unbanip 1.2.3.4
 ```
-<img width="604" height="130" alt="image" src="https://github.com/user-attachments/assets/3b6a13b4-7478-454f-9836-463b93fb698e" />
-Trong đây có list IP đã bị chặn, list IP được cho phép, logs và jails là các bộ lọc tự động theo dõi, nếu ai đó gõ sai mật khẩu SSH, Mail, Apache hay Plesk Panel quá số lần quy định, họ sẽ bị tống vào các "nhà tù" tương ứng này  
+<img width="604" height="130" alt="image" src="https://github.com/user-attachments/assets/3b6a13b4-7478-454f-9836-463b93fb698e" />  
+
+Trong đây có list IP đã bị chặn, list IP được cho phép, logs và jails là các bộ lọc tự động theo dõi, nếu ai đó gõ sai mật khẩu SSH, Mail, Apache hay Plesk Panel quá số lần quy định, họ sẽ bị tống vào các "nhà tù" tương ứng này    
 
 #### Web Application Firewall (ModSecurity)
 
@@ -727,7 +730,8 @@ Webmail: truy cập link **Webmail** ngay trong danh sách tài khoản mail —
 
 ### 8.2 Giới hạn email gửi đi (Limit Outgoing Messages)
 
-Plesk → **Mail** → **Mail Settings** 
+Plesk → **Mail** → **Mail Settings**   
+
 <img width="606" height="199" alt="image" src="https://github.com/user-attachments/assets/bed93404-d689-4866-9e5d-44b15e142aab" />
 
 ### 8.3 SPF, DKIM, DMARC
