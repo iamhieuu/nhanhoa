@@ -104,13 +104,13 @@ DNS truyền thống (port 53/UDP) **không mã hóa** → dễ bị nghe lén, 
 |---|---|---|
 | **A** | Address | Trỏ domain → IPv4. Bản ghi cơ bản nhất, dùng cho web server |
 | **AAAA** | IPv6 Address | Trỏ domain → IPv6 |
-| **CNAME** | Canonical Name | Alias domain này → domain khác (vd `www` → `example.com`). Không dùng chung được với bản ghi khác trên cùng hostname (vd MX) |
-| **NS** | Name Server | Khai báo server thẩm quyền (authoritative) cho zone/domain |
+| **CNAME** | Canonical Name | Alias domain này → domain khác (vd `www` → `example.com`). Không dùng chung được với bản ghi khác trên cùng hostname |
+| **NS** | Name Server | Khai báo server authoritative cho zone/domain |
 | **SOA** | Start of Authority | Metadata của zone: primary NS, email admin, serial number, refresh/retry/expire/TTL — bắt buộc có 1 bản ghi/zone |
 | **PTR** | Pointer (reverse lookup) | Ngược lại với A: IP → domain. Quan trọng cho mail server (reverse DNS check chống spam) |
 | **MX** | Mail Exchanger | Chỉ định mail server nhận email cho domain, có priority — domain luôn nên có ≥1 MX backup |
-| **SRV** | Service | Khai báo host + **port** cho 1 service cụ thể (vd SIP, VoIP, Minecraft server...) |
-| **TXT** | Text | Lưu chuỗi text tùy ý — nền tảng cho xác thực email (xem bảng 6.2) và domain verification |
+| **SRV** | Service | Khai báo host + **port** cho 1 service cụ thể  |
+| **TXT** | Text | Lưu chuỗi text tùy ý — nền tảng cho xác thực email và domain verification |
 
 ### 6.2 TXT record cho xác thực email — bộ ba SPF/DKIM/DMARC
 
@@ -124,7 +124,7 @@ DNS truyền thống (port 53/UDP) **không mã hóa** → dễ bị nghe lén, 
 
 > **Kinh nghiệm thực chiến:** khi mới bật DMARC cho domain đã hoạt động lâu, luôn bắt đầu bằng policy `p=none` (chỉ nhận report, không chặn) trong 1–2 tuần để rà soát toàn bộ nguồn gửi mail hợp lệ (CRM, marketing tool, ticket system...) trước khi chuyển dần lên `p=quarantine` rồi `p=reject`. Bật thẳng `p=reject` ngay từ đầu là nguyên nhân phổ biến khiến mail hệ thống nội bộ (không phải spam) bị chặn oan.
 
-### 6.3 Các bản ghi khác (ít dùng trong vận hành thường ngày)
+### 6.3 Các bản ghi khác 
 
 | Bản ghi | Công dụng ngắn |
 |---|---|
@@ -148,9 +148,9 @@ TTL (Time To Live) quyết định resolver sẽ **cache** bản ghi trong bao l
 | **Trước khi migrate server / đổi IP** (làm 24–48h trước) | Hạ xuống 300s (5 phút) | Khi đổi IP thật, resolver cũ hết hạn cache nhanh, giảm thời gian downtime cảm nhận |
 | Sau khi migrate xong, đã ổn định | Tăng dần lại về 3600s+ | Cache lâu hơn để tối ưu hiệu năng, giảm tải DNS server |
 | Bản ghi MX (mail) | 3600s+ | Mail ít khi đổi server đột ngột, ưu tiên ổn định |
-| Bản ghi dùng cho failover tự động (multi-CDN, HA) | 60–300s | Cần cache ngắn để failover có hiệu lực nhanh khi 1 điểm chết |
+| Bản ghi dùng cho failover tự động | 60–300s | Cần cache ngắn để failover có hiệu lực nhanh khi 1 điểm chết |
 
-> **Lưu ý:** hạ TTL **phải làm trước** thời điểm đổi bản ghi ít nhất bằng đúng giá trị TTL cũ (VD TTL cũ đang 86400s thì phải hạ trước tối thiểu 24h), vì bản thân giá trị TTL cũ vẫn còn hiệu lực cache ở các resolver trên toàn cầu cho đến khi nó tự hết hạn.
+>  Hạ TTL phải làm trước thời điểm đổi bản ghi ít nhất bằng đúng giá trị TTL cũ (VD TTL cũ đang 86400s thì phải hạ trước tối thiểu 24h), vì bản thân giá trị TTL cũ vẫn còn hiệu lực cache ở các resolver trên toàn cầu cho đến khi nó tự hết hạn.
 
 ---
 
@@ -159,26 +159,24 @@ TTL (Time To Live) quyết định resolver sẽ **cache** bản ghi trong bao l
 "Propagation" không phải do DNS "lan truyền chậm" theo nghĩa vật lý — mà do **hàng nghìn resolver trên thế giới cache bản ghi cũ theo TTL riêng của từng resolver**, và chỉ query lại authoritative server khi cache hết hạn.
 
 **Thời gian thực tế phụ thuộc vào:**
-- TTL của bản ghi cũ (xem mục 7) — yếu tố quyết định chính.
-- Một số ISP/resolver **không tuân thủ đúng TTL** (cache lâu hơn tuyên bố) — hay gặp ở ISP tại Việt Nam.
+- TTL của bản ghi cũ — yếu tố quyết định chính.
+- Một số ISP/resolver **không tuân thủ đúng TTL** — hay gặp ở ISP tại Việt Nam.
 - Registrar propagation (khi đổi **NS record** ở tầng registrar) có thể mất 24–48h vì phải chờ TLD server cập nhật, không kiểm soát được bằng TTL.
 
 **Công cụ kiểm tra thực tế khi hỗ trợ khách hàng:**
 ```bash
 # Tra cứu từ nhiều resolver khác nhau trên thế giới
-# (khuyến nghị dùng công cụ web: dnschecker.org, whatsmydns.net)
+# khuyến nghị dùng công cụ web: dnschecker.org, whatsmydns.net)
 
 # Kiểm tra từ chính server, so sánh với resolver public
 dig domain.com @8.8.8.8 +short
 dig domain.com @1.1.1.1 +short
-dig domain.com @ns1.nhanhoa.com +short   # hỏi thẳng authoritative NS, luôn ra kết quả mới nhất
+dig domain.com @ns1.nhanhoa.com +short  
 ```
-
-> **Mẹo xử lý ticket "tôi đổi DNS rồi mà web vẫn ra IP cũ":** luôn `dig` thẳng vào **authoritative NS** trước để xác nhận bản ghi mới đã đúng chưa. Nếu đúng rồi thì đó chỉ là vấn đề cache phía resolver của khách hàng — hướng dẫn họ flush cache local hoặc đợi hết TTL, không phải lỗi từ phía DNS server.
 
 ---
 
-## 9. Zone file mẫu — tổng hợp các bản ghi trong 1 domain thật
+## 9. Zone file mẫu 
 
 Ví dụ zone file Bind9 hoàn chỉnh cho domain `example.com`, gộp các loại bản ghi đã học ở mục 6:
 
@@ -222,7 +220,7 @@ _dmarc              IN  TXT  "v=DMARC1; p=quarantine; rua=mailto:dmarc@example.c
 
 ## 10. Split-horizon DNS
 
-**Split-horizon DNS** (hay split-brain DNS) là kỹ thuật trả về **kết quả phân giải khác nhau** cho cùng một domain, tùy theo nguồn truy vấn đến từ mạng nội bộ hay internet công cộng.
+Split-horizon DNS hay split-brain DNS là kỹ thuật trả về kết quả phân giải khác nhau cho cùng một domain, tùy theo nguồn truy vấn đến từ mạng nội bộ hay internet công cộng.
 
 **Use case thực tế:**
 - `app.company.com` khi truy vấn từ nhân viên trong mạng LAN công ty → trả về IP nội bộ `192.168.x.x` (đi thẳng qua LAN, nhanh hơn, không qua internet).
@@ -248,7 +246,7 @@ view "external" {
 };
 ```
 
-> Lưu ý: `view` nội bộ phải khai **trước** `view` external trong file cấu hình — Bind9 xét theo thứ tự từ trên xuống, khớp view đầu tiên thỏa điều kiện là dừng.
+> Lưu ý: `view` nội bộ phải khai trước `view` external trong file cấu hình — Bind9 xét theo thứ tự từ trên xuống, khớp view đầu tiên thỏa điều kiện là dừng.
 
 ---
 
@@ -279,7 +277,7 @@ DNS đã hoạt động thành công
 > **Bổ sung kiểm tra sau cùng khuyến nghị:** ngoài `dig`, nên chạy thêm `named-checkzone` để validate cú pháp zone file trước khi reload, tránh lỗi khiến Bind9 crash toàn bộ zone:
 > ```bash
 > named-checkzone domain.com /etc/bind/db.domain.com
-> named-checkconf   # validate named.conf trước khi reload
+> named-checkconf  
 > systemctl reload bind9
 > ```
 
