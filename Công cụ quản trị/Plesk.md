@@ -1,7 +1,7 @@
 # Control panel Plesk
 
-> **Truy cập Plesk (Admin/Reseller/Customer dùng chung 1 cổng):** `https://103.179.190.194:8443` hoặc `https://<domain>:8443`
-> **Truy cập Webmail:** thường qua `https://webmail.<domain>` hoặc link **Webmail** ngay trong menu Mail của từng domain (không có cổng cố định riêng như cPanel 2096)
+> **Truy cập Plesk (Admin/Reseller/Customer dùng chung 1 cổng):** `https://103.179.190.194:8443` hoặc `https://<domain>:8443`  
+> **Truy cập Webmail:** thường qua `https://webmail.<domain>`
 
 ---
 
@@ -33,15 +33,14 @@
 - [9. Mailing List](#9-mailing-list)
 - [10. Scheduled Tasks (Cron)](#10-scheduled-tasks-cron)
 - [11. Backup & Restore (cấp Subscription)](#11-backup--restore-cấp-subscription)
-- [12. Triển khai Next.js trên Plesk](#12-triển-khai-nextjs-trên-plesk)
-- [13. 5 lỗi phổ biến nhất](#13-5-lỗi-phổ-biến-nhất)
-- [14. Những lưu ý "chết người" – Dễ mất file/data](#14-những-lưu-ý-chết-người--dễ-mất-filedata)
-- [15. Cấu hình nâng cao qua SSH (cho Admin)](#15-cấu-hình-nâng-cao-qua-ssh-cho-admin)
-  - [15.1 Check log hệ thống & đăng nhập SSH](#151-check-log-hệ-thống--đăng-nhập-ssh)
-  - [15.2 Check log tài khoản user cụ thể](#152-check-log-tài-khoản-user-cụ-thể)
-  - [15.3 Check log Mail (Postfix/Qmail)](#153-check-log-mail-postfixqmail)
-  - [15.4 Check log Web (Nginx/Apache)](#154-check-log-web-nginxapache)
-  - [15.5 Check log Plesk Panel](#155-check-log-plesk-panel)
+- [12. 5 lỗi phổ biến nhất](#13-5-lỗi-phổ-biến-nhất)
+- [13. Những lưu ý "chết người" – Dễ mất file/data](#14-những-lưu-ý-chết-người--dễ-mất-filedata)
+- [14. Cấu hình nâng cao qua SSH (cho Admin)](#15-cấu-hình-nâng-cao-qua-ssh-cho-admin)
+  - [14.1 Check log hệ thống & đăng nhập SSH](#151-check-log-hệ-thống--đăng-nhập-ssh)
+  - [14.2 Check log tài khoản user cụ thể](#152-check-log-tài-khoản-user-cụ-thể)
+  - [14.3 Check log Mail (Postfix/Qmail)](#153-check-log-mail-postfixqmail)
+  - [14.4 Check log Web (Nginx/Apache)](#154-check-log-web-nginxapache)
+  - [14.5 Check log Plesk Panel](#155-check-log-plesk-panel)
 - [Bảng vị trí log quan trọng](#bảng-vị-trí-log-quan-trọng)
 - [References](#references)
 
@@ -49,14 +48,14 @@
 
 ## 1. Tổng quan cổng truy cập
 
-Khác với cPanel/WHM tách biệt theo cổng riêng cho từng cấp (2087/2083/2096), **Plesk dùng chung 1 cổng 8443** cho mọi cấp quản trị — sự khác biệt nằm ở **tài khoản đăng nhập**, không phải cổng:
+ Plesk dùng chung 1 cổng 8443 cho mọi cấp quản trị — sự khác biệt nằm ở tài khoản đăng nhập, không phải cổng:
 
 | Cổng | Dịch vụ | Dành cho | Địa chỉ thực tế |
 |------|---------|----------|----------------|
-| **8443** | Plesk Panel | Admin — quản trị toàn server | `https://103.179.190.194:8443` (login `admin`) |
+| **8443** | Plesk Panel | Admin — quản trị toàn server | `https://103.179.190.194:8443` |
 | **8443** | Plesk Panel | Reseller — quản lý khách hàng được cấp | `https://103.179.190.194:8443` (login reseller) |
 | **8443** | Plesk Panel | Customer — quản lý 1 subscription | `https://103.179.190.194:8443` hoặc `https://<domain>:8443` (login customer) |
-| — | Webmail | Người dùng cuối — đọc/gửi email | `https://webmail.<domain>` hoặc link **Webmail** trong mục Mail |
+| — | Webmail | Người dùng cuối — đọc/gửi email | `https://webmail.<domain>` |
 
 > Vì dùng chung cổng, Plesk phân quyền hoàn toàn dựa trên **loại tài khoản đăng nhập** (Administrator / Reseller / Customer) — đăng nhập bằng tài khoản nào, giao diện và phạm vi thao tác sẽ tự động giới hạn tương ứng.
 
@@ -614,7 +613,9 @@ Nhấn **Install** → chờ 1–2 phút → truy cập `https://hieucute.id.vn/
 
 **Cách 1: File Manager** — Plesk → **Files** (trong Subscription) → điều hướng thư mục → **Upload Files**.
 
-**Cách 2: SFTP qua FileZilla (khuyến nghị)**
+<img width="1878" height="798" alt="image" src="https://github.com/user-attachments/assets/330c3c55-e4f9-464d-b688-c5885cdb0f82" />
+
+**Cách 2: SFTP qua FileZilla**
 ```
 Host: 103.179.190.194  |  Port: 22  |  Username: (system user của domain)  |  Password: mật khẩu FTP/hệ thống
 ```
@@ -646,12 +647,15 @@ chmod 600 /var/www/vhosts/hieucute.id.vn/httpdocs/wp-config.php
 
 **Đường dẫn:** Plesk → **Websites & Domains** → chọn domain → **FTP Access** (hoặc **Hosting & DNS → FTP**)
 
+<img width="1649" height="463" alt="image" src="https://github.com/user-attachments/assets/ccdb4047-3871-45e5-a239-06d0b0e68e86" />
+
 | Trường | Giá trị | Ghi chú |
 |--------|---------|---------|
 | FTP account name | `ftpdev` | |
 | Home directory | thư mục con cần giới hạn | Giới hạn phạm vi truy cập |
 | Password | *(nút Generate)* | |
-| Hard disk quota | `500 MB` hoặc Unlimited | |
+
+<img width="1139" height="567" alt="image" src="https://github.com/user-attachments/assets/89102b2f-24e9-4c16-a36f-523848f1987b" />
 
 Kết nối FileZilla:
 ```
@@ -664,7 +668,7 @@ Host: 103.179.190.194  |  Port: 22 (SFTP)  |  Username: ftpdev
 
 ## 6. Quản lý Cơ sở dữ liệu
 
-**Đường dẫn:** Plesk → **Databases** (trong Subscription) → **Add Database**
+**Đường dẫn:** Plesk → **Databases** → **Add Database**
 
 **Bước 1:** Nhập tên database `wpdb`.
 
@@ -679,8 +683,11 @@ DB_USER:     wpuser
 DB_PASSWORD: (mật khẩu vừa tạo)
 DB_HOST:     localhost
 ```
+<img width="642" height="490" alt="image" src="https://github.com/user-attachments/assets/cf4e66ba-e663-4e3d-b7e6-25cd3dfbb3d9" />
 
 **Kết nối phpMyAdmin:** nhấn nút **phpMyAdmin** ngay cạnh database trong danh sách để quản trị trực quan (Export/Import Dump, Check & Repair...).
+
+<img width="1452" height="933" alt="image" src="https://github.com/user-attachments/assets/425a9df2-546f-4a01-8038-0ecd2697dc02" />
 
 ---
 
@@ -690,11 +697,15 @@ DB_HOST:     localhost
 
 **Đường dẫn:** Plesk → **Websites & Domains** → chọn domain → **SSL/TLS Certificates** → **Install a free basic certificate provided by Let's Encrypt** → chọn phạm vi bảo vệ (domain chính, www, webmail, mail) → **Get it free**.
 
+<img width="1871" height="923" alt="image" src="https://github.com/user-attachments/assets/efb44601-465a-45c9-9027-3c34fec7918f" />
+
 Chờ 1–3 phút → trạng thái Secured.
 
 ### 7.2 Cài SSL có sẵn 
 
 Plesk → **SSL/TLS Certificates** → **Upload the certificate here** → chọn file `.pem`/private key/CA bundle → **Upload**.
+
+<img width="1876" height="931" alt="image" src="https://github.com/user-attachments/assets/a6610f0d-1fdd-462c-b5b8-b1b5608d0903" />
 
 ### 7.3 Gỡ SSL cũ khi Let's Encrypt thất bại
 
@@ -705,6 +716,8 @@ Plesk → **SSL/TLS Certificates** → **Upload the certificate here** → chọ
 ### 7.4 Redirect HTTP to HTTPS
 
 Plesk → **Hosting Settings** của domain → tick **Redirect visitors from HTTP to HTTPS**.
+
+<img width="1877" height="847" alt="image" src="https://github.com/user-attachments/assets/1169f1f5-1ad7-4fe1-aff4-def74fee6477" />
 
 > **Thứ tự bắt buộc:** Cài SSL xong, xác nhận cert hợp lệ **trước** khi bật Redirect. Bật trước khi cert active sẽ gây redirect loop — website sập hoàn toàn.
 
@@ -745,6 +758,8 @@ Plesk → **Mail** → **Mail Settings**
 | DMARC (giai đoạn 1) | `v=DMARC1; p=none; rua=mailto:hieunt@nhanhoa.com.vn` |
 | DMARC (giai đoạn 3 – nghiêm ngặt) | `v=DMARC1; p=reject; pct=100; rua=mailto:hieunt@nhanhoa.com.vn` |
 
+<img width="1539" height="908" alt="image" src="https://github.com/user-attachments/assets/9ec9a04d-99b8-455b-bc18-b2a825cb672d" />
+
 ```bash
 dig TXT hieucute.id.vn | grep spf
 dig TXT default._domainkey.hieucute.id.vn
@@ -763,7 +778,7 @@ Nhập địa chỉ mailing list, email admin quản lý, danh sách subscribers
 
 ## 10. Scheduled Tasks (Cron)
 
-**Đường dẫn:** Plesk → **Websites & Domains** → chọn domain → **Scheduled Tasks**
+**Đường dẫn:** **Tool&setting**  → **Scheduled Tasks**
 
 | Cú pháp | Ý nghĩa |
 |---------|---------|
@@ -771,17 +786,18 @@ Nhập địa chỉ mailing list, email admin quản lý, danh sách subscribers
 | `0 2 * * 0` | Mỗi Chủ nhật 2:00 sáng |
 | `*/5 * * * *` | Mỗi 5 phút |
 
-**Ví dụ thực tế:**
+VD:
 ```bash
 # WordPress cron
-*/15 * * * * wget -q -O /dev/null "https://hieucute.id.vn/wp-cron.php?doing_wp_cron"
+wget -q -O /dev/null "https://hieucute.id.vn/wp-cron.php?doing_wp_cron"
 
-# Backup database 2:00 sáng
-0 2 * * * mysqldump -u wpuser -p'password' wpdb | gzip > /var/www/vhosts/hieucute.id.vn/backups/db_$(date +\%Y-\%m-\%d).sql.gz
+# Backup database 
+mysqldump -u wpuser -p'password' wpdb | gzip > /var/www/vhosts/hieucute.id.vn/backups/db_$(date +\%Y-\%m-\%d).sql.gz
 
 # Xóa backup cũ hơn 7 ngày
-0 3 * * * find /var/www/vhosts/hieucute.id.vn/backups -type f -mtime +7 -delete
+ find /var/www/vhosts/hieucute.id.vn/backups -type f -mtime +7 -delete
 ```
+<img width="935" height="680" alt="image" src="https://github.com/user-attachments/assets/0da28b37-cd51-4494-a1ea-e33e3157dc51" />
 
 > Luôn dùng đường dẫn **tuyệt đối** trong lệnh cron. Cấu hình email nhận thông báo lỗi ngay trong giao diện Scheduled Tasks.
 
@@ -795,56 +811,23 @@ Nhập địa chỉ mailing list, email admin quản lý, danh sách subscribers
 
 Tải về: **Backup Manager** → chọn bản backup → **Download**.
 
+<img width="1840" height="883" alt="image" src="https://github.com/user-attachments/assets/bc28b070-5299-4f17-8b4c-7b7baf16e42a" />
+
 ### 11.2 Backup từng phần
 
-Tương tự mục 11.1 nhưng bỏ tick các hạng mục không cần (ví dụ chỉ backup Database, hoặc chỉ Files).
+Tương tự nhưng bỏ tick các hạng mục không cần (ví dụ chỉ backup Database, hoặc chỉ Files).
 
 ### 11.3 Restore
 
 Plesk → **Backup Manager** → chọn bản backup → **Restore** → chọn lại đúng hạng mục cần khôi phục (Configuration/Mail/Files/Database) → **OK**.
 
-> Restore ghi đè dữ liệu hiện tại của mục được chọn. Full Backup cấp server chỉ restore được qua Admin (xem mục 2.15).
+> Restore ghi đè dữ liệu hiện tại của mục được chọn. Full Backup cấp server chỉ restore được qua Admin.
 
 ---
 
-## 12. Triển khai Next.js trên Plesk
 
-**Đường dẫn:** Plesk → **Websites & Domains** → chọn domain → **Node.js**
 
-| Trường | Giá trị |
-|--------|---------|
-| Node.js version | `18.x` hoặc `20.x` |
-| Application mode | `Production` |
-| Document root | thư mục chứa mã nguồn Next.js |
-| Application startup file | `server.js` |
-
-Cài qua **Run Nodejs Command** (terminal tích hợp trong Plesk) hoặc SSH:
-```bash
-cd /var/www/vhosts/hieucute.id.vn/httpdocs && rm -rf *
-npx create-next-app@latest . --yes
-npm run build
-```
-
-File `server.js`:
-```javascript
-const { createServer } = require('http');
-const { parse } = require('url');
-const next = require('next');
-const app = next({ dev: false, hostname: 'localhost', port: process.env.PORT || 3000 });
-const handle = app.getRequestHandler();
-app.prepare().then(() => {
-    createServer(async (req, res) => {
-        try { await handle(req, res, parse(req.url, true)); }
-        catch (err) { res.statusCode = 500; res.end('error'); }
-    }).listen(process.env.PORT || 3000);
-});
-```
-
-Sau khi tạo xong: nhấn **Enable Node.js** → **Restart App**.
-
----
-
-## 13. 5 lỗi phổ biến nhất
+## 12. 5 lỗi phổ biến nhất
 
 ### Lỗi 1 – 500 Internal Server Error
 
@@ -897,19 +880,19 @@ Plesk → domain → **PHP Settings** → sửa:
 
 ---
 
-## 14. Những lưu ý "chết người" – Dễ mất file/data
+## 13. Những lưu ý "chết người" – Dễ mất file/data
 
 > Tổng hợp các thao tác **không thể hoàn tác** hoặc **gây mất dữ liệu không cảnh báo rõ ràng** trong Plesk. Đọc kỹ trước khi thực hiện.
 
-### 14.1 Remove Customer trong Admin — Xóa vĩnh viễn, không hỏi lại nhiều
+### 13.1 Remove Customer trong Admin — Xóa vĩnh viễn, không hỏi lại nhiều
 
 **Plesk (Admin) → Hosting Services → Customers → Remove**
 
 Xóa toàn bộ file website, database, email, DNS zone của mọi Subscription thuộc customer. **Không có thùng rác, không undo.**
 
-> **Bắt buộc:** Tạo Full Backup (mục 2.14) và xác nhận file backup tồn tại thực tế **trước khi** Remove.
+> **Bắt buộc:** Tạo Full Backup và xác nhận file backup tồn tại thực tế **trước khi** Remove.
 
-### 14.2 Restore ghi đè Subscription hiện tại
+### 13.2 Restore ghi đè Subscription hiện tại
 
 **Backup Manager → Restore → chọn ghi đè dữ liệu hiện có**
 
@@ -917,61 +900,61 @@ Nếu bản backup đã cũ, dữ liệu mới hơn (bài viết, đơn hàng) t
 
 > Luôn backup bản hiện tại **trước** khi restore bản cũ hơn.
 
-### 14.3 phpMyAdmin — Drop Database/Table không hỏi lại kỹ
+### 13.3 phpMyAdmin — Drop Database/Table không hỏi lại kỹ
 
 Trong phpMyAdmin (mở từ Plesk Databases), tab **Operations** → **Drop the database** — thực hiện gần như ngay lập tức.
 
 > Luôn **Export** ra file `.sql` trước khi thay đổi cấu trúc database.
 
-### 14.4 File Manager — Xóa file bỏ qua Recycle Bin
+### 13.4 File Manager — Xóa file bỏ qua Recycle Bin
 
 Plesk File Manager có thể cấu hình xóa vĩnh viễn ngay (tuỳ theo cấu hình Recycle Bin của server).
 
 > Nén (`.zip`) và tải file quan trọng về máy trước khi xóa.
 
-### 14.5 Giải nén file .zip đè lên thư mục hiện có
+### 13.5 Giải nén file .zip đè lên thư mục hiện có
 
 Giải nén đè trực tiếp vào Document Root đang có website — Plesk ghi đè file trùng tên (`index.php`, `wp-config.php`, `.htaccess`) mà không luôn cảnh báo rõ ràng.
 
 > Backup thư mục hiện tại trước khi giải nén bản mới, hoặc giải nén vào thư mục tạm rồi mới move vào production.
 
-### 14.6 Redirect HTTP → HTTPS bật trước khi có SSL hợp lệ
+### 13.6 Redirect HTTP → HTTPS bật trước khi có SSL hợp lệ
 
 Bật **Redirect visitors from HTTP to HTTPS** khi cert chưa active hoặc đã hết hạn → website rơi vào **infinite redirect loop**.
 
 > Thứ tự bắt buộc: (1) Cài SSL + xác nhận hoạt động, (2) mới bật Redirect.
 
-### 14.7 Đổi PHP Handler toàn server — Restart Web Server
+### 13.7 Đổi PHP Handler toàn server — Restart Web Server
 
 Đổi PHP handler/version áp dụng cho nhiều domain cùng lúc có thể **yêu cầu restart Web Server**, gây gián đoạn tạm thời toàn bộ site trên máy chủ.
 
 > Thực hiện vào khung giờ thấp điểm (1:00–4:00 sáng).
 
-### 14.8 Sai cấu hình Mail Settings → Mất toàn bộ email đến
+### 13.8 Sai cấu hình Mail Settings → Mất toàn bộ email đến
 
 Cấu hình sai chính sách nhận email (ví dụ chọn **Reject** cho địa chỉ không tồn tại trong khi DNS domain đang trỏ sai) → email bị từ chối âm thầm, không bounce.
 
 > Sau khi đổi bất kỳ Mail Setting nào: test gửi/nhận ngay với Gmail/Outlook, kiểm tra `/var/log/maillog`.
 
-### 14.9 Xóa SSL Private Key trước khi có cert mới
+### 13.9 Xóa SSL Private Key trước khi có cert mới
 
 **SSL/TLS Certificates → Manage → Remove** cert cũ trong khi vẫn đang được website sử dụng → lỗi SSL ngay lập tức.
 
 > Thứ tự đúng: cài cert mới và test hoạt động → mới xoá cert/key cũ.
 
-### 14.10 Reset mật khẩu Customer không lưu lại
+### 13.10 Reset mật khẩu Customer không lưu lại
 
 Plesk (Admin) → **Customers** → đổi thông tin đăng nhập → hiệu lực ngay lập tức. Không lưu/gửi lại cho khách → mất quyền truy cập.
 
 > Luôn copy mật khẩu mới vào password manager **trước** khi rời trang, gửi ngay cho khách hàng.
 
-### 14.11 Remove Subscription khi Backup đang chạy dở
+### 13.11 Remove Subscription khi Backup đang chạy dở
 
 Xóa Subscription trong lúc backup job đang chạy → file backup dở dang bị lỗi, không restore được.
 
 > Kiểm tra **Backup Manager** đảm bảo không có job đang chạy trước khi Remove/Terminate.
 
-### 14.12 Sửa DNS Zone xóa nhầm bản ghi MX
+### 13.12 Sửa DNS Zone xóa nhầm bản ghi MX
 
 **DNS Settings → Records → xóa nhầm MX** → toàn bộ email đến của domain bị mất, không bounce ngay (do TTL DNS còn hiệu lực).
 
@@ -979,11 +962,11 @@ Xóa Subscription trong lúc backup job đang chạy → file backup dở dang b
 
 ---
 
-## 15. Cấu hình nâng cao qua SSH (cho Admin)
+## 14. Cấu hình nâng cao qua SSH (cho Admin)
 
 > Các lệnh dưới đây cần chạy với quyền `root` trên server.
 
-### 15.1 Check log hệ thống & đăng nhập SSH
+### 14.1 Check log hệ thống & đăng nhập SSH
 
 **File log:** `/var/log/auth.log` (Ubuntu) | `/var/log/secure` (CentOS/AlmaLinux)
 
@@ -1003,7 +986,7 @@ tail -f /var/log/auth.log | grep -i "sudo\|su:"
 
 > Nếu thấy 1 IP lặp lại hàng trăm lần trong Failed password: `fail2ban-client set sshd banip <IP>` hoặc chặn thủ công qua Firewall (mục 2.10).
 
-### 15.2 Check log tài khoản user cụ thể
+### 14.2 Check log tài khoản user cụ thể
 
 ```bash
 # Tiến trình đang chạy của system user gắn với domain hieucute.id.vn
@@ -1016,7 +999,7 @@ top -u abc_vn
 cat /var/www/vhosts/hieucute.id.vn/.bash_history
 ```
 
-### 15.3 Check log Mail (Postfix/Qmail)
+### 14.3 Check log Mail (Postfix/Qmail)
 
 **File log chính:** `/var/log/maillog` (CentOS/AlmaLinux) hoặc `/var/log/mail.log` (Ubuntu)
 
@@ -1034,7 +1017,7 @@ mailq
 postsuper -d ALL
 ```
 
-### 15.4 Check log Web (Nginx/Apache)
+### 14.4 Check log Web (Nginx/Apache)
 
 **File log:** `/var/www/vhosts/system/<domain>/logs/`
 
@@ -1052,7 +1035,7 @@ grep -i "500\|502\|503" /var/www/vhosts/system/hieucute.id.vn/logs/access_log | 
 tail -f /var/log/nginx/error.log
 ```
 
-### 15.5 Check log Plesk Panel
+### 14.5 Check log Plesk Panel
 
 **File log:** `/var/log/plesk/`
 
