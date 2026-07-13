@@ -252,7 +252,7 @@ Thông tin cần điền:
 | **User** | Thư mục trùng tên user, nằm **bên trong `public_html`** (ví dụ `public_html/tenuser/`) | Dùng khi muốn cấp cho 1 người chỉ truy cập đúng 1 thư mục con trong website  |
 | **Custom** | Đường dẫn tự nhập, ví dụ `/home/iamhieu` | Dùng khi cần giới hạn FTP vào **đúng 1 thư mục cụ thể bất kỳ** trên hệ thống file của account — linh hoạt nhất, nên dùng khi cấp quyền cho bên thứ ba |
 
-> ⚠️ Lưu ý khi tư vấn khách: nếu khách chỉ cần "gửi/nhận file" thì hướng dẫn chọn **Ftp** hoặc **Custom** trỏ vào thư mục riêng, **không nên** mặc định chọn **Domain** vì sẽ lộ toàn bộ mã nguồn, log, và cả các domain con khác nếu có.
+>  Lưu ý khi tư vấn khách: nếu khách chỉ cần "gửi/nhận file" thì hướng dẫn chọn **Ftp** hoặc **Custom** trỏ vào thư mục riêng, **không nên** mặc định chọn **Domain** vì sẽ lộ toàn bộ mã nguồn, log, và cả các domain con khác nếu có.
 
 **Quản lý sau khi tạo:**
 
@@ -420,7 +420,7 @@ Chọn địa chỉ IP sẽ gán cho dữ liệu sau khi restore.
  
 Chọn file `.tar.gz` cần restore → nhấn **Submit** để bắt đầu.
  
-> ⚠️ **Lưu ý:** Restore sẽ **ghi đè** dữ liệu hiện tại của user/domain đó.  
+>  **Lưu ý:** Restore sẽ **ghi đè** dữ liệu hiện tại của user/domain đó.  
 > Luôn tạo backup bản hiện tại trước khi restore bản cũ.
  
 ---
@@ -466,7 +466,7 @@ Ví dụ domain `hieucute.id.vn`, server IP `103.170.123.213`:
 | 3 | `www` | CNAME | `hieucute.id.vn.` | 300 |
 | 4 | `@` | MX | `mail.hieucute.id.vn.` | 300 | Priority 10 |
 
-> ⚠️ MX phải trỏ vào **A record** (`mail.hieucute.id.vn.`), **không trỏ vào CNAME**.
+>  MX phải trỏ vào **A record** (`mail.hieucute.id.vn.`), **không trỏ vào CNAME**.
 
 #### Bước 2 – SPF (chống giả mạo email)
 
