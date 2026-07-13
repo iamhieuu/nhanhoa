@@ -7,13 +7,13 @@
 - [3. Nguyên tắc làm việc](#3-nguyên-tắc-làm-việc)
 - [4. Luồng phân giải DNS (resolution flow)](#4-luồng-phân-giải-dns-resolution-flow)
 - [5. Bảo mật DNS — chuẩn 2026](#5-bảo-mật-dns--chuẩn-2026)
-- [6. Các bản ghi DNS — Bảng tra cứu nhanh](#6-các-bản-ghi-dns--bảng-tra-cứu-nhanh)
+- [6. Các bản ghi DNS](#6-các-bản-ghi-dns)
   - [6.1 Bản ghi cốt lõi (Web & Mail)](#61-bản-ghi-cốt-lõi-web--mail)
   - [6.2 TXT record cho xác thực email — bộ ba SPF/DKIM/DMARC](#62-txt-record-cho-xác-thực-email--bộ-ba-spfdkimdmarc)
-  - [6.3 Các bản ghi khác (ít dùng trong vận hành thường ngày)](#63-các-bản-ghi-khác-ít-dùng-trong-vận-hành-thường-ngày)
-- [7. Chiến lược TTL — kinh nghiệm thực chiến](#7-chiến-lược-ttl--kinh-nghiệm-thực-chiến)
-- [8. DNS Propagation — vì sao đổi DNS chưa có hiệu lực ngay](#8-dns-propagation--vì-sao-đổi-dns-chưa-có-hiệu-lực-ngay)
-- [9. Zone file mẫu — tổng hợp các bản ghi trong 1 domain thật](#9-zone-file-mẫu--tổng-hợp-các-bản-ghi-trong-1-domain-thật)
+  - [6.3 Các bản ghi khác](#63-các-bản-ghi-khác)
+- [7. Chiến lược TTL](#7-chiến-lược-ttl)
+- [8. DNS Propagation](#8-dns-propagation)
+- [9. Zone file mẫu ](#9-zone-file-mẫu)
 - [10. Split-horizon DNS](#10-split-horizon-dns)
 - [11. Thực hành với Bind9 (Linux)](#11-thực-hành-với-bind9-linux)
 
@@ -96,7 +96,7 @@ DNS truyền thống (port 53/UDP) **không mã hóa** → dễ bị nghe lén, 
 
 ---
 
-## 6. Các bản ghi DNS — Bảng tra cứu nhanh
+## 6. Các bản ghi DNS 
 
 ### 6.1 Bản ghi cốt lõi (Web & Mail)
 
@@ -120,9 +120,9 @@ DNS truyền thống (port 53/UDP) **không mã hóa** → dễ bị nghe lén, 
 | **DKIM** | Ký số mỗi email gửi đi, mail nhận verify để xác minh không bị sửa nội dung trên đường truyền | TXT tại subdomain selector (vd `default._domainkey`) |
 | **DMARC** | Policy: mail fail SPF/DKIM thì xử lý thế nào (reject/quarantine/none) + report về địa chỉ giám sát | TXT tại `_dmarc.domain.com` |
 
-> Thiếu 1 trong 3 → email dễ vào spam hoặc bị giả mạo (spoofing) gửi thay domain.
+> Thiếu 1 trong 3 → email dễ vào spam hoặc bị giả mạo  gửi thay domain.
 
-> **Kinh nghiệm thực chiến:** khi mới bật DMARC cho domain đã hoạt động lâu, luôn bắt đầu bằng policy `p=none` (chỉ nhận report, không chặn) trong 1–2 tuần để rà soát toàn bộ nguồn gửi mail hợp lệ (CRM, marketing tool, ticket system...) trước khi chuyển dần lên `p=quarantine` rồi `p=reject`. Bật thẳng `p=reject` ngay từ đầu là nguyên nhân phổ biến khiến mail hệ thống nội bộ (không phải spam) bị chặn oan.
+>  khi mới bật DMARC cho domain đã hoạt động lâu, luôn bắt đầu bằng policy `p=none` (chỉ nhận report, không chặn) trong 1–2 tuần để rà soát toàn bộ nguồn gửi mail hợp lệ (CRM, marketing tool, ticket system...) trước khi chuyển dần lên `p=quarantine` rồi `p=reject`. Bật thẳng `p=reject` ngay từ đầu là nguyên nhân phổ biến khiến mail hệ thống nội bộ (không phải spam) bị chặn oan.
 
 ### 6.3 Các bản ghi khác 
 
@@ -138,7 +138,7 @@ DNS truyền thống (port 53/UDP) **không mã hóa** → dễ bị nghe lén, 
 
 ---
 
-## 7. Chiến lược TTL — kinh nghiệm thực chiến
+## 7. Chiến lược TTL
 
 TTL (Time To Live) quyết định resolver sẽ **cache** bản ghi trong bao lâu trước khi hỏi lại authoritative server. Chọn TTL sai là nguyên nhân phổ biến gây downtime kéo dài khi migrate server.
 
@@ -154,14 +154,14 @@ TTL (Time To Live) quyết định resolver sẽ **cache** bản ghi trong bao l
 
 ---
 
-## 8. DNS Propagation — vì sao đổi DNS chưa có hiệu lực ngay
+## 8. DNS Propagation
 
-"Propagation" không phải do DNS "lan truyền chậm" theo nghĩa vật lý — mà do **hàng nghìn resolver trên thế giới cache bản ghi cũ theo TTL riêng của từng resolver**, và chỉ query lại authoritative server khi cache hết hạn.
+"Propagation" không phải do DNS "lan truyền chậm" theo nghĩa vật lý, mà do hàng nghìn resolver trên thế giới cache bản ghi cũ theo TTL riêng của từng resolver, và chỉ query lại authoritative server khi cache hết hạn.
 
 **Thời gian thực tế phụ thuộc vào:**
 - TTL của bản ghi cũ — yếu tố quyết định chính.
-- Một số ISP/resolver **không tuân thủ đúng TTL** — hay gặp ở ISP tại Việt Nam.
-- Registrar propagation (khi đổi **NS record** ở tầng registrar) có thể mất 24–48h vì phải chờ TLD server cập nhật, không kiểm soát được bằng TTL.
+- Một số ISP/resolver không tuân thủ đúng TTL — hay gặp ở ISP tại Việt Nam.
+- Registrar propagation (khi đổi NS record ở tầng registrar) có thể mất 24–48h vì phải chờ TLD server cập nhật, không kiểm soát được bằng TTL.
 
 **Công cụ kiểm tra thực tế khi hỗ trợ khách hàng:**
 ```bash
@@ -222,7 +222,6 @@ _dmarc              IN  TXT  "v=DMARC1; p=quarantine; rua=mailto:dmarc@example.c
 
 Split-horizon DNS hay split-brain DNS là kỹ thuật trả về kết quả phân giải khác nhau cho cùng một domain, tùy theo nguồn truy vấn đến từ mạng nội bộ hay internet công cộng.
 
-**Use case thực tế:**
 - `app.company.com` khi truy vấn từ nhân viên trong mạng LAN công ty → trả về IP nội bộ `192.168.x.x` (đi thẳng qua LAN, nhanh hơn, không qua internet).
 - Cùng domain đó khi truy vấn từ internet bên ngoài → trả về IP public thật của server.
 
