@@ -12,8 +12,8 @@
     - [2.5 Cấu hình firewall](#25-cấu-hình-firewall)
   - [3. Cấu hình DNS Server](#3-cấu-hình-dns-server)
     - [3.1 Vì sao Zimbra cần DNS nội bộ](#31-vì-sao-zimbra-cần-dns-nội-bộ)
-    - [3.2 Phương án BIND9 (khuyến nghị Production)](#32-phương-án-bind9-khuyến-nghị-production)
-    - [3.3 Phương án dnsmasq (đơn giản, dùng cho LAB)](#33-phương-án-dnsmasq-đơn-giản-dùng-cho-lab)
+    - [3.2 Phương án BIND9](#32-phương-án-bind9)
+    - [3.3 Phương án dnsmasq ](#33-phương-án-dnsmasq)
   - [4. Cài đặt Zimbra](#4-cài-đặt-zimbra)
     - [4.1 Tải source Zimbra](#41-tải-source-zimbra)
     - [4.2 Giải nén và chạy script cài đặt](#42-giải-nén-và-chạy-script-cài-đặt)
@@ -93,21 +93,19 @@ LAB có:
 - Tên server là `mail.hieucute.id.vn`
 - Địa chỉ IP là `192.168.136.131`
 
-### 3.2 Phương án BIND9 (khuyến nghị Production)
+### 3.2 Phương án BIND9 
 
 **Bước 1 – Cài đặt các gói cần thiết**
 
 ```bash
 sudo apt-get install bind9 bind9utils resolvconf net-tools -y
 ```
-![image](./images/zim-cf0.png)
 
 **Bước 2 – Set hostname**
 
 ```bash
 hostnamectl set-hostname mail.hieucute.id.vn
 ```
-![image](./images/zimb-1.png)
 
 **Bước 3 – Chỉnh sửa file hosts, thêm dòng**
 
@@ -118,7 +116,6 @@ nano /etc/hosts
 192.168.136.131 hieucute.id.vn     
 192.168.136.131 mail.hieucute.id.vn     mail
 ```
-![image](./images/zimb-2.png)
 
 **Bước 4 – Cấu hình resolv.conf**
 
@@ -131,7 +128,6 @@ echo "nameserver 192.168.136.131" >> /etc/resolvconf/resolv.conf.d/head
 sudo resolvconf --enable-updates
 sudo resolvconf -u
 ```
-![image](./images/zimb-3.png)
 
 **Bước 5 – Cấu hình DNS server local**
 
@@ -143,8 +139,6 @@ cp /etc/bind/named.conf.options /etc/bind/named.conf.options.backup
 > /etc/bind/named.conf.local
 sed -i '/directory*/a\        forwarders {8.8.8.8; 8.8.4.4;};' /etc/bind/named.conf.options;
 ```
-![image](./images/zimb-4.png)
-![image](./images/zimb-5.png)
 
 - Tạo file `/etc/bind/named.conf.local` và thêm nội dung
 
@@ -161,7 +155,6 @@ zone  hieucute.id.vn {
                 };
         };
 ```
-![image](./images/zimb-6.png)
 
 - Tạo file `/var/lib/bind/hieucute.id.vn.hosts` và thêm nội dung
 
@@ -177,7 +170,6 @@ hieucute.id.vn.       IN      NS      mail.hieucute.id.vn.
 mail.hieucute.id.vn.  IN      A       192.168.136.131
 hieucute.id.vn.       IN      MX      10 mail
 ```
-![image](./images/zimb-7.png)
 
 - Khởi động lại `named` để apply
 
@@ -185,23 +177,22 @@ hieucute.id.vn.       IN      MX      10 mail
 systemctl restart named
 systemctl enable named
 ```
-![image](./images/zimb-8.png)
 
 **Bước 6 – Kiểm tra**
 
 ```bash
 nslookup mail.hieucute.id.vn
 ```
-Kết quả như trong ảnh là thành công:
-![image](./images/zimb-9.png)
+<img width="513" height="130" alt="image" src="https://github.com/user-attachments/assets/2cc3fe0f-f36c-407b-b441-38a75f00eb90" />
 
-### 3.3 Phương án dnsmasq (đơn giản, dùng cho LAB)
+
+### 3.3 Phương án dnsmasq 
 
 Với môi trường LAB đơn giản, không cần zone file phức tạp như BIND, có thể dùng `dnsmasq` để cấu hình DNS nội bộ nhanh cho hostname phân giải đúng trước khi cài Zimbra.
 
 <img width="628" height="374" alt="image" src="https://github.com/user-attachments/assets/b56cae9f-9247-4cf3-994a-2734eb37111f" />
 
-> **Lưu ý:** Chỉ chọn một trong hai phương án (BIND hoặc dnsmasq) cho một server. BIND phù hợp production nhờ khả năng làm caching non-forwarding DNS server đúng khuyến nghị của Zimbra/Spamassassin; dnsmasq phù hợp LAB/test nhanh.
+
 
 ---
 
@@ -212,7 +203,6 @@ Với môi trường LAB đơn giản, không cần zone file phức tạp như 
 ```bash
 wget https://files.zimbra.com/downloads/10.1.0_GA/zcs-NETWORK-10.1.0_GA_4655.UBUNTU22_64.20240819064312.tgz
 ```
-![image](./images/zim-cf5.png)
 
 ### 4.2 Giải nén và chạy script cài đặt
 
@@ -221,8 +211,6 @@ tar xzvf zcs-NETWORK-10.1.0_GA_4655.UBUNTU22_64.20240819064312.tgz
 cd zcs-NETWORK-10.1.0_GA_4655.UBUNTU22_64.20240819064312
 ./install.sh
 ```
-![image](./images/zim-cf6.png)
-![image](./images/zim-cf7.png)
 
 Ngoài ra có thể tham khảo bước cài đặt gói zimbra thực tế trên Ubuntu 22.04:
 
@@ -235,21 +223,18 @@ Giao diện sau khi cài:
 ### 4.3 Cấu hình trong quá trình cài đặt
 
 - Chọn tính năng cài theo chỉ dẫn của script
-![image](./images/zim-cf10.png)
 - Các cấu hình cơ bản zimbra
-![image](./images/zim-cf11.png)
 - Cấu hình mật khẩu admin: Chọn `6` và `4` để tới dòng cấu hình mật khẩu
-![image](./images/zimb-12.png)
-![image](./images/zimb-13.png)
+
 
 Minh họa thao tác cài đặt mật khẩu cho Zimbra:
 
 <img width="569" height="398" alt="image" src="https://github.com/user-attachments/assets/cb7ae056-7c1f-4bb7-9365-33f2bf3048ca" />
 
 - Cấu hình trạng thái kích hoạt license: Chọn tiếp `32` rồi chọn `2` để cấu hình activate sau khi cài.
-![image](./images/zimb-14.png)
+
 - Chọn `r` để về menu chính, `a` để apply cấu hình, `yes` để thực hiện cài đặt zimbra
-![image](./images/zimb-15.png)
+
 
 Lưu cấu hình và chạy:
 
@@ -258,23 +243,23 @@ Lưu cấu hình và chạy:
 ### 4.4 Kiểm tra sau khi cài đặt
 
 - Sau khi có thông báo này là quá trình cài đặt hoàn tất
-![image](./images/zimb-16.png)
+
 
 Giao diện thành công:
 
 <img width="859" height="319" alt="image" src="https://github.com/user-attachments/assets/d688159c-e7ed-4abd-b296-e62e1deb5ea6" />
 
 - Truy cập giao diện quản lý Zimbra tại `https://192.168.136.131:7071/zimbraAdmin/`
-![image](./images/zimb-17.png)
+
 
 ### 4.5 Kích hoạt license
 
 - Tiến hành kích hoạt trial license
-![image](./images/zimbra-key.png)
+
   - Key lấy từ mail nhận được sau khi submit form tại [Zimbra Trial-license](https://www.zimbra.com/connect/forms/?form=trial-license)
-  ![image](./images/zimb-18.png)
+
 - Kích hoạt thành công license
-![image](./images/zimbra-activate.png)
+
 
 ---
 
@@ -283,16 +268,12 @@ Giao diện thành công:
 ### 5.1 Tạo user mới
 
 - Tại giao diện admin click chọn `Manage`
-![image](./images/zimb-19.png)
 - Click chọn icon bánh răng góc trên bên phải để tạo user mới
-![image](./images/zimb-20.png)
 - Cấu hình tên, username và mật khẩu -> Click Finish
-![image](./images/zimb-21.png)
-![image](./images/zimb-22.png)
 - Kiểm tra bằng cách đăng nhập user/pass trên zimbra webmail `http://192.168.136.131:8080/`
-![image](./images/zimb-23.png)
+
 - Đăng nhập thành công
-![image](./images/zimb-24.png)
+
 
 Minh họa thao tác tạo user mới:
 
@@ -301,25 +282,25 @@ Minh họa thao tác tạo user mới:
 ### 5.2 Thiết lập chính sách mật khẩu
 
 - Tại giao diện admin click chọn `Configure`
-![image](./images/zimb-25.png)
+
 - Tại phần COS click chuột phải `default` chọn `edit`
-![image](./images/zimb-26.png)
+
 - Chuyển tới tab `Advanced`, panel bên phải hiển thị phần cấu hình chính sách mật khẩu
-![image](./images/zimb-27.png)
+
 
 <img width="849" height="393" alt="image" src="https://github.com/user-attachments/assets/3ddc8d3a-3929-45a4-ba30-79efd8019693" />
 
 ### 5.3 Thiết lập chữ ký và Forward email
 
 - Tại giao diện web mail chọn `PREFERENCES` -> Signature
-![image](./images/zimb-28.png)
+
 - Tại đây cấu hình tên, chữ ký và lưu.
-![image](./images/zimb-29.png)
+
 
 - Tại giao diện web mail chọn `PREFERENCES` -> Mail
-![image](./images/zimb-28.png)
+
 - Tại phần Receiving Message cấu hình mail muốn forward
-![image](./images/zimb-30.png)
+
 
 Minh họa thiết lập chữ ký & forward:
 
@@ -333,7 +314,7 @@ Minh họa thiết lập chữ ký & forward:
 ```bash
 cd /opt/zimbra/store/0/
 ```
-![image](./images/zimb-31.png)
+
 
 - Tìm ID mailbox từ account email
 
@@ -341,14 +322,14 @@ cd /opt/zimbra/store/0/
 su zimbra
 zmprov getMailboxInfo admin@hieucute.id.vn
 ```
-![image](./images/zimb-32.png)
+
 
 - Tại giao diện admin click chọn `Manage Accounts`
-![image](./images/zimb-43.png)
+
 - Click chuột phải vào user cần sửa, chọn `edit`
-![image](./images/zimb-44.png)
+
 - Tại tab `Advanced`, panel bên phải là nơi chỉnh sửa cấu hình quota, có thể chỉnh sửa và lưu ở nút `Save` góc trên bên phải
-![image](./images/zimb-45.png)
+
 
 Minh họa tìm ID mailbox và chỉnh sửa quota:
 
@@ -379,7 +360,7 @@ zmprov gaaa
 ```bash
 zmprov sp admin@hieucute.id.vn Qaz123456
 ```
-![image](./images/zimb-33.png)
+
 
 Cú pháp đổi mật khẩu tổng quát:
 
@@ -390,7 +371,7 @@ su - zimbra -c "zmprov sp admin@domain.com *mật_khẩu_mới*"
 ### 5.6 Kiểm tra Log gửi/nhận email
 
 - Trên webmail thực hiện gửi mail trong local để test
-![image](./images/zimb-35.png)
+
 - Trên server thực hiện kiểm tra log bằng lệnh
 
 ```bash
@@ -398,7 +379,7 @@ tail -f /var/log/mail.log
 ```
 
 - Log gửi và nhận mail
-![image](./images/zimb-34.png)
+
 
 Bổ sung các lệnh kiểm tra log chi tiết theo từng thành phần Zimbra (`/var/log/zimbra.log`):
 
@@ -432,14 +413,14 @@ mkdir /opt/zimbra/jetty/webapps/zimbra/logos
 cd /opt/zimbra/jetty/webapps/zimbra/logos
 cp /home/mailserver/logo1.jpg logo1.jpg
 ```
-![image](./images/zimb-36.png)
+
 
 - Phân quyền zimbra
 
 ```bash
 chown zimbra:zimbra *
 ```
-![image](./images/zimb-37.png)
+
 
 - Login vào acc zimbra và đổi logo bằng lệnh sau
 
@@ -450,7 +431,7 @@ zmprov md hieucute.id.vn zimbraSkinLogoURL /logos/logo1.jpg
 zmprov md hieucute.id.vn zimbraSkinLogoLoginBanner /logos/logo1.jpg
 zmprov md hieucute.id.vn zimbraSkinLogoAppBanner /logos/logo1.jpg
 ```
-![image](./images/zimb-38.png)
+
 
 ### 5.8 Thay đổi title web (webmail/webadmin)
 
@@ -462,7 +443,7 @@ zmprov md hieucute.id.vn zimbraSkinLogoAppBanner /logos/logo1.jpg
 nano /opt/zimbra/jetty/webapps/zimbra/WEB-INF/classes/messages/ZmMsg.properties
 ```
 Nhấn `Ctrl + /` và điền `3709` để tới dòng chỉnh sửa
-![image](./images/zimb-39.png)
+
 
 - Sửa, lưu, restart mailboxd để apply
 
@@ -471,7 +452,7 @@ su zimbra
 zmmailboxdctl restart
 ```
 - Kiểm tra
-![image](./images/zimb-41.png)
+
 
 **Thay đổi title webadmin**
 
@@ -481,7 +462,7 @@ zmmailboxdctl restart
 nano /opt/zimbra/jetty_base/webapps/zimbraAdmin/WEB-INF/classes/messages/ZabMsg.properties
 ```
 Nhấn `Ctrl + /` và điền `20` để tới dòng chỉnh sửa
-![image](./images/zimb-40.png)
+
 
 - Sửa, lưu, restart mailboxd để apply
 
@@ -490,7 +471,7 @@ su zimbra
 zmmailboxdctl restart
 ```
 - Kiểm tra
-![image](./images/zimb-42.png)
+
 
 ### 5.9 Backup và Restore
 
