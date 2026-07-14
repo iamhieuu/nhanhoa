@@ -28,6 +28,8 @@
 
 > DA quản lý cert theo từng user/domain. Có 2 luồng: Let's Encrypt và SSL trả phí.
 
+<img width="588" height="692" alt="image" src="https://github.com/user-attachments/assets/482b86a8-77ac-4d69-81d6-611d3a0ed1a8" />
+
 ### 6a. Let's Encrypt (miễn phí, tự động)
 
 ```
