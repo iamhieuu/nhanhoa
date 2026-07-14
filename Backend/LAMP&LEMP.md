@@ -99,7 +99,6 @@ Trình duyệt → Apache (nhận request) → PHP (xử lý logic) → MySQL (t
 | **Phù hợp với** | Shared hosting, site có nhiều `.htaccess` rule | VPS, high-traffic site, microservices |
 | **WordPress** | Hoạt động tốt | Hoạt động tốt (cần cấu hình rewrite thêm) |
 
-> 💡 **Khi nào chọn cái nào:**
 > - Chọn **LAMP** nếu: ứng dụng cần `.htaccess`, cần mod_rewrite phức tạp, hoặc bạn quen quản lý Apache.
 > - Chọn **LEMP** nếu: server cần xử lý nhiều traffic, tài nguyên RAM hạn chế, hoặc cần reverse proxy.
 
@@ -178,7 +177,7 @@ OpenSSH                    ALLOW IN    Anywhere
 443/tcp                    ALLOW IN    Anywhere
 ```
 
-> ⚠️ **Quan trọng:** Luôn `allow OpenSSH` **trước** khi `enable ufw`. Nếu bật UFW mà chưa cho phép SSH, kết nối SSH hiện tại sẽ bị ngắt ngay lập tức — mất quyền truy cập server từ xa.
+>   Luôn `allow OpenSSH` **trước** khi `enable ufw`. Nếu bật UFW mà chưa cho phép SSH, kết nối SSH hiện tại sẽ bị ngắt ngay lập tức — mất quyền truy cập server từ xa.
 
 ---
 
@@ -346,7 +345,7 @@ sudo apache2ctl configtest
 sudo systemctl reload apache2
 ```
 
-> 💡 Dùng `reload` thay vì `restart` trong production — `reload` không ngắt kết nối đang xử lý, `restart` ngắt hết.
+> Dùng `reload` thay vì `restart` trong production — `reload` không ngắt kết nối đang xử lý, `restart` ngắt hết.
 
 ---
 
@@ -367,7 +366,7 @@ Kiểm tra trạng thái:
 sudo systemctl status mysql
 ```
 
-> 💡 MySQL 8.0 trên Ubuntu 22.04 mặc định bật `validate_password` plugin. Mật khẩu phải đạt yêu cầu độ phức tạp nhất định.
+> MySQL 8.0 trên Ubuntu 22.04 mặc định bật `validate_password` plugin. Mật khẩu phải đạt yêu cầu độ phức tạp nhất định.
 
 ---
 
@@ -443,7 +442,7 @@ http://hieucute.id.vn/info.php
 
 Kết quả đúng: Trang PHP Info hiển thị đầy đủ thông tin PHP, Apache, Extensions.
 
-> ⚠️ **Bắt buộc xóa sau khi kiểm tra xong** — file `info.php` tiết lộ thông tin cấu hình server, là mục tiêu của hacker:
+>  **Bắt buộc xóa sau khi kiểm tra xong** — file `info.php` tiết lộ thông tin cấu hình server, là mục tiêu của hacker:
 > ```bash
 > sudo rm /var/www/hieucute.id.vn/public_html/info.php
 > ```
@@ -452,7 +451,7 @@ Kết quả đúng: Trang PHP Info hiển thị đầy đủ thông tin PHP, Apa
 
 ## 4. Triển khai LEMP Stack
 
-> ⚠️ Không nên cài cả Apache và Nginx trên cùng một server — cả hai đều cạnh tranh port 80/443. Chọn một trong hai. Nếu đã cài LAMP, hãy dừng/gỡ Apache trước khi cài Nginx.
+>  Không nên cài cả Apache và Nginx trên cùng một server — cả hai đều cạnh tranh port 80/443. Chọn một trong hai. Nếu đã cài LAMP, hãy dừng/gỡ Apache trước khi cài Nginx.
 
 ```bash
 # Dừng Apache nếu đã cài
@@ -619,7 +618,7 @@ sudo nginx -t
 sudo systemctl reload nginx
 ```
 
-> 💡 Dùng `reload` thay vì `restart` để không ngắt kết nối đang phục vụ.
+> Dùng `reload` thay vì `restart` để không ngắt kết nối đang phục vụ.
 
 ---
 
@@ -642,7 +641,7 @@ http://hieucute.id.vn/info.php
 
 Kết quả đúng: Server API hiển thị **FPM/FastCGI** (không phải Apache 2.0 Handler như LAMP).
 
-> ⚠️ **Xóa ngay sau kiểm tra:**
+>  **Xóa ngay sau kiểm tra:**
 > ```bash
 > sudo rm /var/www/hieucute.id.vn/public_html/info.php
 > ```
@@ -729,7 +728,7 @@ sudo apt install -y python3-certbot-apache
 sudo apt install -y python3-certbot-nginx
 ```
 
-> ⚠️ **Bắt buộc:** DNS của `hieucute.id.vn` phải đã trỏ về `103.159.51.228` và port 80 phải mở trước khi cấp SSL.
+>  **Bắt buộc:** DNS của `hieucute.id.vn` phải đã trỏ về `103.159.51.228` và port 80 phải mở trước khi cấp SSL.
 
 ---
 
