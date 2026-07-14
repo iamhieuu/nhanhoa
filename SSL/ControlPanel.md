@@ -4,31 +4,31 @@
 
 ## Mục lục
 
-- [7. DIRECTADMIN — Cài SSL](#7-directadmin--cài-ssl)
-  - [7a. Let's Encrypt (miễn phí, tự động)](#7a-lets-encrypt-miễn-phí-tự-động)
-  - [7b. SSL Trả phí — Paste thủ công](#7b-ssl-trả-phí--paste-thủ-công)
-  - [7c. DA Admin — Cài SSL cho hostname server](#7c-da-admin--cài-ssl-cho-hostname-server)
-- [8. CPANEL — Cài SSL](#8-cpanel--cài-ssl)
-  - [8a. Let's Encrypt / AutoSSL (tự động)](#8a-lets-encrypt--autossl-tự-động)
-  - [8b. SSL Trả phí — Upload qua WHM](#8b-ssl-trả-phí--upload-qua-whm)
-  - [8c. Force HTTPS trong cPanel](#8c-force-https-trong-cpanel)
-- [9. AAPANEL — Cài SSL](#9-aapanel--cài-ssl)
-  - [9a. Let's Encrypt (miễn phí)](#9a-lets-encrypt-miễn-phí)
-  - [9b. SSL Trả phí — Paste thủ công](#9b-ssl-trả-phí--paste-thủ-công)
-  - [9c. aaPanel Nginx config mẫu (sinh tự động, tham khảo)](#9c-aapanel-nginx-config-mẫu-sinh-tự-động-tham-khảo)
-- [10. PLESK — Cài SSL](#10-plesk--cài-ssl)
-  - [10a. Let's Encrypt](#10a-lets-encrypt)
-  - [10b. SSL Trả phí — Upload](#10b-ssl-trả-phí--upload)
-  - [10c. Plesk — SSL qua CLI](#10c-plesk--ssl-qua-cli)
+- [6. DIRECTADMIN — Cài SSL](#6-directadmin--cài-ssl)
+  - [6a. Let's Encrypt (miễn phí, tự động)](#6a-lets-encrypt-miễn-phí-tự-động)
+  - [6b. SSL Trả phí — Paste thủ công](#6b-ssl-trả-phí--paste-thủ-công)
+  - [6c. DA Admin — Cài SSL cho hostname server](#6c-da-admin--cài-ssl-cho-hostname-server)
+- [7. CPANEL — Cài SSL](#7-cpanel--cài-ssl)
+  - [7a. Let's Encrypt / AutoSSL (tự động)](#7a-lets-encrypt--autossl-tự-động)
+  - [7b. SSL Trả phí — Upload qua WHM](#7b-ssl-trả-phí--upload-qua-whm)
+  - [7c. Force HTTPS trong cPanel](#7c-force-https-trong-cpanel)
+- [8. AAPANEL — Cài SSL](#8-aapanel--cài-ssl)
+  - [8a. Let's Encrypt (miễn phí)](#8a-lets-encrypt-miễn-phí)
+  - [8b. SSL Trả phí — Paste thủ công](#8b-ssl-trả-phí--paste-thủ-công)
+  - [8c. aaPanel Nginx config mẫu (sinh tự động, tham khảo)](#8c-aapanel-nginx-config-mẫu-sinh-tự-động-tham-khảo)
+- [9. PLESK — Cài SSL](#9-plesk--cài-ssl)
+  - [9a. Let's Encrypt](#9a-lets-encrypt)
+  - [9b. SSL Trả phí — Upload](#9b-ssl-trả-phí--upload)
+  - [9c. Plesk — SSL qua CLI](#9c-plesk--ssl-qua-cli)
 
 ---
 
 
-## 7. DIRECTADMIN — Cài SSL
+## 6. DIRECTADMIN — Cài SSL
 
-> DA quản lý cert theo từng user/domain. Có 2 luồng: Let's Encrypt (1 click) và SSL trả phí (paste thủ công).
+> DA quản lý cert theo từng user/domain. Có 2 luồng: Let's Encrypt và SSL trả phí.
 
-### 7a. Let's Encrypt (miễn phí, tự động)
+### 6a. Let's Encrypt (miễn phí, tự động)
 
 ```
 User Level
@@ -41,7 +41,7 @@ User Level
 
 DA tự động:
 - Tạo CSR + private key
-- Chạy ACME challenge (HTTP-01 qua port 80)
+- Chạy ACME challenge 
 - Nhận cert → ghi vào Apache/Nginx config
 - Cron tự renew trước 30 ngày hết hạn
 
@@ -49,13 +49,13 @@ DA tự động:
 
 ---
 
-### 7b. SSL Trả phí — Paste thủ công
+### 6b. SSL Trả phí — Paste thủ công
 
 **Bước 1: Tạo CSR**
 ```
 User Level → Advanced Features → SSL Certificates
 → ● Generate a Certificate Request (CSR)
-→ Điền: Key Size=2048, Common Name=DOMAIN, Country=VN, ...
+→ Điền: Key Size=2047, Common Name=DOMAIN, Country=VN, ...
 → Save
 ```
 Copy CSR → gửi nhà cung cấp SSL.
@@ -104,7 +104,7 @@ ls /usr/local/directadmin/data/users/USER/domains/
 
 ---
 
-### 7c. DA Admin — Cài SSL cho hostname server
+### 6c. DA Admin — Cài SSL cho hostname server
 
 ```
 Admin Level → Admin Tools → SSL Certificates
@@ -115,14 +115,14 @@ Admin Level → Admin Tools → SSL Certificates
 ```bash
 # Hoặc SSH
 /usr/local/directadmin/scripts/letsencrypt.sh request_single \
-  server.nhanhoa.com 4096
+  server.nhanhoa.com 4086
 ```
 
 ---
 
-## 8. CPANEL — Cài SSL
+## 7. CPANEL — Cài SSL
 
-### 8a. Let's Encrypt / AutoSSL (tự động)
+### 7a. Let's Encrypt / AutoSSL (tự động)
 
 cPanel có **AutoSSL** chạy tự động mỗi ngày — thường không cần làm gì.
 
@@ -132,20 +132,21 @@ WHM (root) → SSL/TLS → Manage AutoSSL
 → Xem domain nào đang có SSL, domain nào fail
 → Click "Run AutoSSL for All Users" nếu muốn force chạy ngay
 ```
+<img width="1864" height="924" alt="image" src="https://github.com/user-attachments/assets/cde83f0a-85b4-4bcf-9ea1-6bb093093252" />
 
 Nếu 1 user bị fail:
 ```
 WHM → Manage AutoSSL → chọn user → Run AutoSSL
 ```
+<img width="1878" height="915" alt="image" src="https://github.com/user-attachments/assets/09b456c5-4d0e-42cd-bae4-54ebee8eb841" />
 
 **Lý do hay fail AutoSSL:**
 - DNS chưa trỏ đúng về IP server
-- Domain đang dùng Cloudflare proxy (cam) → tắt proxy (xám) rồi chạy lại
-- Port 80 bị chặn firewall
+- Port 70 bị chặn firewall
 
 ---
 
-### 8b. SSL Trả phí — Upload qua WHM
+### 7b. SSL Trả phí — Upload qua WHM
 
 ```
 WHM (root)
@@ -154,11 +155,13 @@ WHM (root)
 
 ```
 Domain    : DOMAIN
+IP
 Certificate (CRT): paste public.crt
 Private Key       : paste private.key
 Certificate Authority Bundle (CABUNDLE): paste ca.crt
 → Install
 ```
+<img width="1803" height="910" alt="image" src="https://github.com/user-attachments/assets/85bf018a-1ea6-407f-b502-e7f6f47fce9a" />
 
 Hoặc qua cPanel user:
 ```
@@ -168,15 +171,17 @@ cPanel → Security → SSL/TLS
 → Paste cert + key + bundle
 → Install Certificate
 ```
+<img width="987" height="917" alt="image" src="https://github.com/user-attachments/assets/140bc860-982d-484d-beb6-2ebbde4226ab" />
 
 ---
 
-### 8c. Force HTTPS trong cPanel
+### 7c. Force HTTPS trong cPanel
 
 ```
 cPanel → Domains → Domains
 → Toggle "Redirect to HTTPS" = ON
 ```
+<img width="1326" height="479" alt="image" src="https://github.com/user-attachments/assets/a02d8467-e85a-4e6b-b132-e2b9239ff40d" />
 
 Hoặc thêm vào `.htaccess`:
 ```apache
@@ -195,11 +200,9 @@ ls /var/cpanel/ssl/installed/
 
 ---
 
-## 9. AAPANEL — Cài SSL
+## 8. AAPANEL — Cài SSL
 
-> aaPanel dùng giao diện đồ họa đơn giản, phù hợp VPS cá nhân.
-
-### 9a. Let's Encrypt (miễn phí)
+### 8a. Let's Encrypt 
 
 ```
 aaPanel → Website → chọn DOMAIN → Settings
@@ -212,7 +215,7 @@ aaPanel tự chạy Certbot → lưu cert vào `/www/server/panel/vhost/cert/DOM
 
 ---
 
-### 9b. SSL Trả phí — Paste thủ công
+### 8b. SSL Trả phí — Paste thủ công
 
 ```
 aaPanel → Website → chọn DOMAIN → Settings
@@ -220,7 +223,7 @@ aaPanel → Website → chọn DOMAIN → Settings
 ```
 
 ```
-[Certificate (PEM format)]: paste public.crt + ca.crt (gộp lại)
+[Certificate (PEM format)]: paste public.crt + ca.crt 
 -----BEGIN CERTIFICATE-----
 (nội dung public.crt)
 -----END CERTIFICATE-----
@@ -255,11 +258,11 @@ cat /www/server/panel/vhost/nginx/DOMAIN.conf
 
 ---
 
-### 9c. aaPanel Nginx config mẫu (sinh tự động, tham khảo)
+### 8c. aaPanel Nginx config mẫu 
 
 ```nginx
 server {
-    listen      80;
+    listen      70;
     server_name DOMAIN www.DOMAIN;
     return 301  https://$host$request_uri;
 }
@@ -275,7 +278,7 @@ server {
     index index.php index.html;
 
     location ~ \.php$ {
-        fastcgi_pass   unix:/tmp/php-cgi-82.sock;
+        fastcgi_pass   unix:/tmp/php-cgi-72.sock;
         fastcgi_index  index.php;
         fastcgi_param  SCRIPT_FILENAME $document_root$fastcgi_script_name;
         include        fastcgi_params;
@@ -285,9 +288,9 @@ server {
 
 ---
 
-## 10. PLESK — Cài SSL
+## 9. PLESK — Cài SSL
 
-### 10a. Let's Encrypt
+### 9a. Let's Encrypt
 
 ```
 Plesk → Websites & Domains → chọn DOMAIN
@@ -298,10 +301,11 @@ Plesk → Websites & Domains → chọn DOMAIN
 →  Secure www.DOMAIN
 → Get it Free
 ```
+<img width="888" height="879" alt="image" src="https://github.com/user-attachments/assets/0aeb6011-8eca-4a69-8334-3314d2977f12" />
 
 ---
 
-### 10b. SSL Trả phí — Upload
+### 9b. SSL Trả phí — Upload
 
 ```
 Plesk → Websites & Domains → DOMAIN
@@ -313,7 +317,7 @@ Certificate name : SSL_DOMAIN_2026
 Private key      : paste private.key
 Certificate      : paste public.crt
 CA certificate   : paste ca.crt
-→ Upload Certificate
+→ Upload Certificate or Download or remove existing certificates → Add SSL/TLS Certificate
 ```
 
 Sau đó apply vào domain:
@@ -324,10 +328,11 @@ Sau đó apply vào domain:
 →  Redirect from http to https
 → OK
 ```
+<img width="1871" height="914" alt="image" src="https://github.com/user-attachments/assets/e3e2b87c-7b1d-40e0-9488-63e2bc82259c" />
 
 ---
 
-### 10c. Plesk — SSL qua CLI
+### 9c. Plesk — SSL qua CLI
 
 ```bash
 # List cert hiện có
