@@ -190,6 +190,8 @@ rclone lsd tenremote:
 
 <img width="749" height="80" alt="image" src="https://github.com/user-attachments/assets/7b8f48e0-4cf6-48b9-ba86-1336718293a3" />
 
+
+
 <img width="482" height="75" alt="image" src="https://github.com/user-attachments/assets/bbc76623-e8a0-4838-95d2-cdc512ac350b" />
 
 có thể bắt đầu chuyển dữ liệu lên: rclone copy C:\data hieuwasabi:hieuwasabi -v –log-file=rclone.log
@@ -266,4 +268,7 @@ Ngoài việc đồng bộ từ máy Windows lên bucket, bạn nên tạo thêm
 Việc này sẽ yêu cầu bản trả phí  
  <img width="1911" height="684" alt="image" src="https://github.com/user-attachments/assets/4993e933-af9d-465f-9caf-608100fbbc96" />
 
-*Tài liệu tham khảo cấu trúc từ: [Nhân Hòa Knowledgebase - Hướng dẫn đồng bộ dữ liệu Windows lên S3](https://wiki.nhanhoa.com/kb/huong-dan-dong-bo-du-lieu-windows-len-s3-nhan-hoa-cloud-storage/)*
+*Tài liệu tham khảo:*
+- *[Nhân Hòa Knowledgebase - Hướng dẫn đồng bộ dữ liệu Windows lên S3](https://wiki.nhanhoa.com/kb/huong-dan-dong-bo-du-lieu-windows-len-s3-nhan-hoa-cloud-storage/)*
+- *[Nhân Hòa Knowledgebase - Hướng dẫn đồng bộ dữ liệu Linux lên S3](https://wiki.nhanhoa.com/kb/rclone-huong-dan-dong-bo-du-lieu-linux-len-s3-nhan-hoa-cloud-storage/)*
+- *[VACIF - Hướng dẫn tạo Buckets và kết hợp tính năng Replication trên Wasabi Cloud](https://vacif.com/huong-dan-tao-buckets-va-ket-hop-tinh-nang-replication-tren-wasabi-cloud/)*
