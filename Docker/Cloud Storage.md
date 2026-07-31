@@ -1,23 +1,22 @@
-# Hướng dẫn đồng bộ dữ liệu Windows lên Wasabi Cloud Storage
+# Đồng bộ dữ liệu Windows lên Wasabi Cloud Storage
 
-Khi đăng ký gói Wasabi trial, cần chuẩn bị các thông tin sau:
+## Mục lục
 
-- URL Console: https://console.wasabisys.com
-- Email: 
-- Password: 
-
-Thông tin này dùng để đăng nhập, tạo bucket, quản lý file được đồng bộ lên cloud.
-
-- ACCESS-KEY: 
-- SECRET-KEY: 
-
-Thông tin ACCESS-KEY, SECRET-KEY dùng để kết nối từ máy Windows lên bucket được tạo trên trang quản lý storage.
+- [Đăng ký tài khoản Wasabi trial và tạo Access Key / Secret Key](#đăng-ký-tài-khoản-wasabi-trial-và-tạo-access-key--secret-key)
+- [Bước 1: Tạo bucket trên trang quản lý storage](#bước-1-tạo-bucket-trên-trang-quản-lý-storage)
+- [Bước 2: Cài đặt Rclone](#bước-2-cài-đặt-rclone)
+  - [Cài đặt Rclone trên Linux](#cài-đặt-rclone-trên-linux)
+- [Bước 3: Kết nối remote rclone vào bucket vừa tạo](#bước-3-kết-nối-remote-rclone-vào-bucket-vừa-tạo)
+- [Bước 4: Kiểm tra kết nối với bucket](#bước-4-kiểm-tra-kết-nối-với-bucket)
+- [Bước 5: Đặt lịch tự đồng bộ dữ liệu daily](#bước-5-đặt-lịch-tự-đồng-bộ-dữ-liệu-daily)
+  - [Đặt lịch tự đồng bộ dữ liệu daily trên Linux](#đặt-lịch-tự-đồng-bộ-dữ-liệu-daily-trên-linux)
+- [Bước 6: Backup dữ liệu bằng Object Replication](#bước-6-backup-dữ-liệu-bằng-object-replication)
 
 ---
 
-### Bước 1: Đăng ký tài khoản Wasabi trial và tạo Access Key / Secret Key
+### Đăng ký tài khoản Wasabi trial và tạo Access Key / Secret Key
 
-1. Truy cập: https://wasabi.com/trial-signup
+1. Truy cập: https://wasabi.com/try-free
 2. Điền thông tin: Họ tên, Email, Số điện thoại, Tên công ty
 3. Kiểm tra email và bấm link xác nhận để kích hoạt tài khoản
 4. Đăng nhập vào Wasabi Console: https://console.wasabisys.com
@@ -31,7 +30,7 @@ Tạo Access Key / Secret Key:
 
 ---
 
-## Bước 1: Tạo bucket trên trang quản lý storage
+### Bước 1: Tạo bucket trên trang quản lý storage
 
 Đăng nhập vào https://console.wasabisys.com, sau đó bấm Create Bucket.
 
@@ -56,7 +55,7 @@ Create hoàn tất
 
 ---
 
-## Bước 2: Cài đặt Rclone
+### Bước 2: Cài đặt Rclone
 
 Tải Rclone cho Windows tại link: https://rclone.org/downloads/
 
@@ -64,10 +63,28 @@ Sau khi download về, tiến hành giải nén và đổi tên thư mục thàn
 
 <img width="1127" height="634" alt="image" src="https://github.com/user-attachments/assets/fd9d1a25-0f6c-4f9d-af6d-d9f096658fb3" />
 
+### Cài đặt Rclone trên Linux
+```
+sudo -v ; curl https://rclone.org/install.sh | sudo bash
+```
+ 
+Với các OS thuộc RHEL-based (CentOS, AlmaLinux, Rocky Linux...) cần cài thêm gói `unzip` nếu máy chưa có:
+ 
+```
+sudo yum install unzip -y
+```
+ 
+Kiểm tra cài đặt thành công:
+ 
+```
+rclone version
+```
+
+<img width="667" height="164" alt="image" src="https://github.com/user-attachments/assets/2111be1a-3785-44fa-8c94-a94b49709fee" />
 
 ---
 
-## Bước 3: Kết nối remote rclone vào bucket vừa tạo
+### Bước 3: Kết nối remote rclone vào bucket vừa tạo
 
 Vào đường dẫn C:\rclone vừa copy ở trên, nhập vào thanh địa chỉ: cmd rồi Enter để mở Command Prompt ngay tại thư mục đó.
 
@@ -75,6 +92,10 @@ Vào đường dẫn C:\rclone vừa copy ở trên, nhập vào thanh địa ch
 
 Gõ vào cmd: rclone config
 <img width="977" height="515" alt="image" src="https://github.com/user-attachments/assets/cc8742a1-f51d-43b8-9cee-13400bab0a7f" />
+
+**Linux** cũng: rclone config để tạo kết nối remote giữa Rclone và S3 storage
+
+<img width="819" height="112" alt="image" src="https://github.com/user-attachments/assets/623e378b-3293-433d-8679-dbee7f0f1d78" />
 
 
 Enter name for new remote.
@@ -169,6 +190,8 @@ rclone lsd tenremote:
 
 <img width="749" height="80" alt="image" src="https://github.com/user-attachments/assets/7b8f48e0-4cf6-48b9-ba86-1336718293a3" />
 
+<img width="482" height="75" alt="image" src="https://github.com/user-attachments/assets/bbc76623-e8a0-4838-95d2-cdc512ac350b" />
+
 có thể bắt đầu chuyển dữ liệu lên: rclone copy C:\data hieuwasabi:hieuwasabi -v –log-file=rclone.log
 
 Trong đó:
@@ -191,7 +214,7 @@ Upload file thành công
 
 ---
 
-## Bước 5: Đặt lịch tự đồng bộ dữ liệu daily
+### Bước 5: Đặt lịch tự đồng bộ dữ liệu daily
 
 1. Bấm `Windows + R`, gõ: `taskschd.msc`
 2. Vào Task Scheduler Library > Create Task
@@ -207,7 +230,7 @@ Upload file thành công
      copy C:\data tenremote:tenbucket -v --log-file=C:\rclone\rclone.log
      ```
 
-     <img width="663" height="493" alt="image" src="https://github.com/user-attachments/assets/5aaed7bb-ea36-4e59-9ee0-b49902eabeb1" />
+<img width="663" height="493" alt="image" src="https://github.com/user-attachments/assets/5aaed7bb-ea36-4e59-9ee0-b49902eabeb1" />
 
 Mục setting, tích thêm cột fail  
 <img width="625" height="471" alt="image" src="https://github.com/user-attachments/assets/81a07384-8624-4554-b846-30c7d29146ba" />
@@ -217,6 +240,30 @@ Mục setting, tích thêm cột fail
 
 <img width="1920" height="407" alt="image" src="https://github.com/user-attachments/assets/5ac66903-65fa-417a-9d7e-57fcd23fd4fc" />
 
----
+### Đặt lịch tự đồng bộ dữ liệu daily trên Linux 
+ 
+1. Mở file cấu hình cron:
+```
+   crontab -e
+```
+2. Thêm vào các dòng sau:
+```
+   15 15 * * * /bin/bash -c "rclone copy /root/data tenremote:tenbucket -v --log-file=/root/data/rclone.log"
+```
+3. Lưu và thoát. Cron sẽ tự chạy lệnh đồng bộ vào **15:15 hàng ngày** (có thể chỉnh giờ theo nhu cầu, format là `phút giờ * * *`)
+   
+<img width="1179" height="67" alt="image" src="https://github.com/user-attachments/assets/9e13db75-9774-4279-8532-122e342948fe" />
 
-*Tài liệu tham khảo cấu trúc từ: [Nhân Hòa Knowledgebase - Hướng dẫn đồng bộ dữ liệu Windows lên S3](https://wiki.nhanhoa.com/kb/huong-dan-dong-bo-du-lieu-windows-len-s3-nhan-hoa-cloud-storage/), điều chỉnh lại cho dịch vụ Wasabi Cloud Storage.*
+Kiểm tra cron đã lên lịch thành công:
+```
+crontab -l
+```
+
+---
+### Bước 6: Backup dữ liệu bằng Object Replication
+ 
+Ngoài việc đồng bộ từ máy Windows lên bucket, bạn nên tạo thêm 1 lớp backup ngay trên Wasabi bằng tính năng Object Replication: mỗi khi có file mới/cập nhật trong bucket nguồn, Wasabi sẽ tự động sao chép sang 1 bucket đích khác để dự phòng.
+Việc này sẽ yêu cầu bản trả phí  
+ <img width="1911" height="684" alt="image" src="https://github.com/user-attachments/assets/4993e933-af9d-465f-9caf-608100fbbc96" />
+
+*Tài liệu tham khảo cấu trúc từ: [Nhân Hòa Knowledgebase - Hướng dẫn đồng bộ dữ liệu Windows lên S3](https://wiki.nhanhoa.com/kb/huong-dan-dong-bo-du-lieu-windows-len-s3-nhan-hoa-cloud-storage/)*
